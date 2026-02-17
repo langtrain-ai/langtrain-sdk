@@ -9,6 +9,7 @@
   
   <p>
     <a href="https://www.npmjs.com/package/langtrain"><img src="https://img.shields.io/npm/v/langtrain?style=flat-square&labelColor=18181b&color=22c55e" alt="npm version" /></a>
+    <a href="https://www.npmjs.com/package/langtrain"><img src="https://img.shields.io/npm/dm/langtrain?style=flat-square&labelColor=18181b&color=3b82f6" alt="npm downloads" /></a>
     <a href="https://langtrain.ai"><img src="https://img.shields.io/badge/website-langtrain.ai-18181b?style=flat-square&labelColor=18181b" alt="website" /></a>
     <a href="https://docs.langtrain.ai"><img src="https://img.shields.io/badge/docs-documentation-18181b?style=flat-square&labelColor=18181b" alt="documentation" /></a>
     <a href="https://github.com/langtrain-ai/langtrain-sdk/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/langtrain?style=flat-square&labelColor=18181b&color=3b82f6" alt="license" /></a>
@@ -100,6 +101,29 @@ async function analyzeAndTune() {
 - **☁️ Data Persistence**: Automatically sync datasets and training jobs with your workspace.
 - **📊 Subscription Management**: Verify plan limits and feature access programmatically.
 
+## ⚙️ Configuration
+
+The SDK and CLI can be configured using environment variables `(dotenv supported)` or via `langtrain login`.
+
+| Variable | Description |
+| :--- | :--- |
+| `LANGTRAIN_API_KEY` | Your project API Key (get it from the dashboard). |
+| `LANGTRAIN_WORKSPACE_ID` | (Optional) Workspace ID for specific environment interaction. |
+
+```typescript
+// Example: Manually passing config
+const client = new Langvision({
+  apiKey: "lt_sk_...",
+  workspaceId: "ws_..."
+});
+```
+
+## 🤝 Community & Support
+
+- **[GitHub Discussions](https://github.com/langtrain-ai/langtrain-sdk/discussions)**: Ask questions and share ideas.
+- **[Twitter](https://twitter.com/langtrain_ai)**: Follow for updates and announcements.
+- **[Email](mailto:support@langtrain.ai)**: Contact us for enterprise support.
+
 ## 📚 Documentation
 
 - [**Langtrain Documentation**](https://docs.langtrain.ai)
@@ -109,4 +133,4 @@ async function analyzeAndTune() {
 ## 📄 License
 
 This repository is licensed under the [MIT License](LICENSE).
-copyright © [Langtrain AI](https://langtrain.ai)
+copyright © [Langtrain](https://langtrain.xyz)
