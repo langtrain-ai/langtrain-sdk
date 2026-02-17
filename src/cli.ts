@@ -53,7 +53,7 @@ async function main() {
     ███████╗██║  ██║██║ ╚████║╚██████╔╝  ██║   ██║  ██║██║  ██║██║██║ ╚████║
     ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝
     `;
-        console.log(gradient.atlas(banner));
+        console.log(gradient(['#00DC82', '#36E4DA', '#0047E1'])(banner)); // Custom Langtrain Green-Cyan-Blue gradient
         intro(`${bgCyan(black(' Langtrain SDK v0.1.8 '))}`);
 
         // Check auth
