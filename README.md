@@ -1,25 +1,41 @@
-<p align="center"><code>npm i -g langtrain</code></p>
-<p align="center"><strong>Langtrain CLI</strong> is a unified AI engineering platform that runs locally on your computer and connects to the Langtrain Cloud.
-<br/>
-<p align="center">
-If you want Langtrain in your code editor, <a href="https://langtrain.ai/docs/vscode">install the VS Code Extension.</a>
-<br/>If you are looking for the <em>web-based platform</em>, <strong>Langtrain Web</strong>, go to <a href="https://langtrain.ai">langtrain.ai</a>.
-</p>
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/langtrain-ai/langtrain-sdk/main/public/langtrain-white.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/langtrain-ai/langtrain-sdk/main/public/langtrain-black.svg">
+    <img alt="Langtrain Logo" src="https://raw.githubusercontent.com/langtrain-ai/langtrain-sdk/main/public/langtrain-black.svg" width="250">
+  </picture>
+  <h3>Langtrain SDK</h3>
+  <p>The unified intelligence layer for JavaScript applications.</p>
+  
+  <p>
+    <a href="https://www.npmjs.com/package/langtrain"><img src="https://img.shields.io/npm/v/langtrain?style=flat-square&labelColor=18181b&color=22c55e" alt="npm version" /></a>
+    <a href="https://langtrain.ai"><img src="https://img.shields.io/badge/website-langtrain.ai-18181b?style=flat-square&labelColor=18181b" alt="website" /></a>
+    <a href="https://docs.langtrain.ai"><img src="https://img.shields.io/badge/docs-documentation-18181b?style=flat-square&labelColor=18181b" alt="documentation" /></a>
+    <a href="https://github.com/langtrain-ai/langtrain-sdk/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/langtrain?style=flat-square&labelColor=18181b&color=3b82f6" alt="license" /></a>
+  </p>
+
+  <br/>
+
+  <p align="center"><code>npm i -g langtrain</code></p>
+  <p><strong>Langtrain CLI</strong> is a unified AI engineering platform that runs locally on your computer and connects to the Langtrain Cloud.</p>
+
+  <p>
+    If you want Langtrain in your code editor, <a href="https://langtrain.ai/docs/vscode">install the VS Code Extension.</a><br/>
+    If you are looking for the <em>web-based platform</em>, <strong>Langtrain Web</strong>, go to <a href="https://langtrain.ai">langtrain.ai</a>.
+  </p>
+</div>
 
 ---
 
-## Quickstart
-
-### Installing and running Langtrain CLI
+## 🚀 Quickstart (CLI)
 
 Install globally with npm:
 
 ```shell
-# Install using npm
 npm install -g langtrain
 ```
 
-Then simply run `langtrain` to get started with the interactive menu.
+Then run `langtrain` to start the interactive AI engineering studio:
 
 ```shell
 langtrain
@@ -38,25 +54,59 @@ sudo npm install -g langtrain
 
 Run `langtrain login` and enter your API Key from the dashboard to authenticate. We recommend signing into your Langtrain account to use **Cloud Finetuning**, **Agent Persistence**, and **Model Hosting** as part of your Pro or Enterprise plan. [Learn more about Langtrain Plans](https://langtrain.ai/pricing).
 
-You can check your current subscription status and limits directly from the CLI:
-
+Check your subscription status and limits:
 ```shell
 langtrain status
 ```
+*Free plans allow local fine-tuning. Upgrade to Pro for cloud-based GPU training.*
 
-*Free plans allow local fine-tuning and limited cloud agent interactions. Upgrade to Pro for cloud-based GPU training.*
+---
 
-## Features
+## 📦 SDK Usage
+
+You can also use `langtrain` as a library in your Node.js applications to build intelligent agents and workflows.
+
+```typescript
+import { Langvision, Langtune, SubscriptionClient } from 'langtrain';
+
+// 1. Initialize Clients
+const vision = new Langvision({ apiKey: process.env.LANGTRAIN_API_KEY });
+const tune = new Langtune({ apiKey: process.env.LANGTRAIN_API_KEY });
+
+async function analyzeAndTune() {
+  // Analyze visual user context
+  const context = await vision.analyze({
+    image: './dashboard.jpg',
+    features: ['layout', 'text'] 
+  });
+
+  console.log('Visual Context:', context);
+
+  // Generate optimized response
+  const response = await tune.generate({
+    model: 'gpt-4-vision-optimized',
+    prompt: `Explain this dashboard layout: ${context.description}`
+  });
+  
+  console.log(response);
+}
+```
+
+## ✨ Features
 
 - **🤖 AI Agents**: Create, manage, and chat with custom AI agents hosted on Langtrain Server.
 - **🧠 Langtune**: Fine-tune LLMs (Llama 3, Mistral) locally or on the cloud.
 - **👁️ Langvision**: Optimize and fine-tune multimodal vision models.
 - **☁️ Data Persistence**: Automatically sync datasets and training jobs with your workspace.
+- **📊 Subscription Management**: Verify plan limits and feature access programmatically.
 
-## Docs
+## 📚 Documentation
 
 - [**Langtrain Documentation**](https://docs.langtrain.ai)
 - [**SDK Reference**](https://docs.langtrain.ai/sdk)
 - [**Contributing**](./CONTRIBUTING.md)
 
+## 📄 License
+
 This repository is licensed under the [MIT License](LICENSE).
+copyright © [Langtrain AI](https://langtrain.ai)
