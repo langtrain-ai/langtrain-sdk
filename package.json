@@ -1,6 +1,6 @@
 {
   "name": "langtrain",
-  "version": "0.1.9",
+  "version": "0.1.13",
   "description": "Unified JavaScript SDK for Langtrain Ecosystem",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.0.1",
+    "axios": "^1.13.5",
     "commander": "^14.0.3",
     "conf": "^15.1.0",
     "gradient-string": "^3.0.0",

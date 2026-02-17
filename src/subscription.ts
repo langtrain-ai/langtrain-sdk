@@ -1,0 +1,45 @@
+export class SubscriptionClient {
+    private client: any; // AxiosInstance
+
+    constructor(config: { apiKey: string, baseUrl?: string }) {
+        const axios = require('axios');
+        this.client = axios.create({
+            baseURL: config.baseUrl || 'https://api.langtrain.ai/api/v1',
+            headers: {
+                'X-API-Key': config.apiKey,
+                'Content-Type': 'application/json'
+            }
+        });
+    }
+
+    async getStatus(): Promise<SubscriptionInfo> {
+        const response = await this.client.get('/subscription/status');
+        return response.data;
+    }
+
+    async checkFeature(feature: string): Promise<FeatureCheck> {
+        const response = await this.client.get(`/subscription/check/${feature}`);
+        return response.data;
+    }
+
+    async getLimits(): Promise<any> {
+        const response = await this.client.get('/subscription/analytics');
+        return response.data;
+    }
+}
+
+export interface SubscriptionInfo {
+    is_active: boolean;
+    plan: string;
+    plan_name: string;
+    expires_at?: string;
+    features: string[];
+    limits: any;
+}
+
+export interface FeatureCheck {
+    feature: string;
+    allowed: boolean;
+    limit?: number;
+    used?: number;
+}

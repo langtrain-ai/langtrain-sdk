@@ -1,8 +1,10 @@
 #!/usr/bin/env node
-import { intro, outro, select, text, spinner, isCancel, cancel, password } from '@clack/prompts';
+import {
+    intro, outro, text, select, confirm, spinner, isCancel, note, cancel, password
+} from '@clack/prompts';
 import { bgCyan, black, red, green, yellow, gray } from 'kleur/colors';
 import { Command } from 'commander';
-import { Langvision, Langtune } from './index';
+import { AgentClient, AgentCreate, FileClient, TrainingClient, SubscriptionClient, Langvision, Langtune } from './index';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -28,18 +30,16 @@ function saveConfig(config: any) {
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
 }
 
-// Initialize clients with config
-const config = getConfig();
-const vision = new Langvision({ apiKey: config.apiKey });
-const tune = new Langtune({ apiKey: config.apiKey });
+const packageJson = require(path.join(__dirname, '../package.json'));
 
 async function main() {
     const program = new Command();
+    const version = packageJson.version;
 
     program
         .name('langtrain')
-        .description('Langtrain CLI for AI Model Fine-tuning and Generation')
-        .version('0.1.8');
+        .description(packageJson.description || 'Langtrain CLI for AI Model Fine-tuning and Generation')
+        .version(version);
 
     program.action(async () => {
         console.clear();
@@ -54,91 +54,79 @@ async function main() {
     ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝
     `;
         console.log(gradient(['#00DC82', '#36E4DA', '#0047E1'])(banner)); // Custom Langtrain Green-Cyan-Blue gradient
-        intro(`${bgCyan(black(' Langtrain SDK v0.1.8 '))}`);
+        intro(`${bgCyan(black(` Langtrain SDK v${version} `))}`);
 
-        // Check auth
+        // Check auth (only show login if missing)
         const config = getConfig();
         if (!config.apiKey) {
             intro(yellow('Authentication required'));
-            const apiKey = await password({
-                message: 'Enter your Langtrain API Key:',
-                validate(value) {
-                    if (!value || value.length === 0) return 'API Key is required';
-                },
+            await handleLogin();
+        }
+
+        // Operation Handlers Map (O(1) lookup)
+        const handlers: Record<string, (clients?: any) => Promise<void>> = {
+            'login': handleLogin,
+            'status': handleSubscriptionStatus,
+            'tune-finetune': (c) => handleTuneFinetune(c.tune),
+            'tune-generate': (c) => handleTuneGenerate(c.tune),
+            'vision-finetune': (c) => handleVisionFinetune(c.vision),
+            'vision-generate': (c) => handleVisionGenerate(c.vision),
+            'agent-list': (c) => handleAgentList(c.agent),
+            'agent-create': (c) => handleAgentCreate(c.agent),
+            'agent-delete': (c) => handleAgentDelete(c.agent),
+            'exit': async () => { outro('Goodbye!'); process.exit(0); },
+        };
+
+        while (true) {
+            const operation = await select({
+                message: 'Select an operation:',
+                options: [
+                    { value: 'group-agents', label: '🤖 Agents (Server)', hint: 'Chat with custom agents' },
+                    { value: 'agent-list', label: '  ↳ List & Run Agents' },
+                    { value: 'agent-create', label: '  ↳ Create New Agent' },
+                    { value: 'agent-delete', label: '  ↳ Delete Agent' },
+
+                    { value: 'group-tune', label: '🧠 Langtune (LLM)', hint: 'Fine-tuning & Text Generation' },
+                    { value: 'tune-finetune', label: '  ↳ Fine-tune Text Model' },
+                    { value: 'tune-generate', label: '  ↳ Generate Text' },
+
+                    { value: 'group-vision', label: '👁️ Langvision (Vision)', hint: 'Vision Analysis & Tuning' },
+                    { value: 'vision-finetune', label: '  ↳ Fine-tune Vision Model' },
+                    { value: 'vision-generate', label: '  ↳ Generate Vision Response' },
+
+                    { value: 'group-settings', label: '⚙️ Settings' },
+                    { value: 'login', label: '  ↳ Update API Key' },
+                    { value: 'exit', label: '  ↳ Exit' }
+                ],
             });
 
-            if (isCancel(apiKey)) {
-                cancel('Operation cancelled');
+            if (isCancel(operation)) {
+                outro('Goodbye!');
                 process.exit(0);
             }
 
-            saveConfig({ ...config, apiKey });
-            intro(green('Successfully logged in!'));
-            // Re-init clients with new key
-            const newConfig = getConfig();
-            // vision.apiKey = newConfig.apiKey; // Ideally settable, but for now restart works or we rely on re-init logic if we moved it inside.
-            // For simplicity in this script, we just proceed. The next run will pick it up, 
-            // OR we can make clients mutable. 
-            // Better: just re-instantiate here if needed, or pass config to handlers.
-        }
+            if (typeof operation === 'string') {
+                if (operation.startsWith('group-')) continue;
 
-        const operation = await select({
-            message: 'Select an operation:',
-            options: [
-                { value: 'group-tune', label: '🧠 Langtune (LLM)', hint: 'Fine-tuning & Text Generation' },
-                { value: 'tune-finetune', label: '  ↳ Fine-tune Text Model' },
-                { value: 'tune-generate', label: '  ↳ Generate Text' },
+                // Execute handler via map lookup
+                const handler = handlers[operation];
+                if (handler) {
+                    try {
+                        // Re-read config & re-init clients freshly for each operation
+                        const currentConfig = getConfig();
+                        const clients = {
+                            vision: new Langvision({ apiKey: currentConfig.apiKey }),
+                            tune: new Langtune({ apiKey: currentConfig.apiKey }),
+                            agent: new AgentClient({ apiKey: currentConfig.apiKey, baseUrl: currentConfig.baseUrl })
+                        };
 
-                { value: 'group-vision', label: '👁️ Langvision (Vision)', hint: 'Vision Analysis & Tuning' },
-                { value: 'vision-finetune', label: '  ↳ Fine-tune Vision Model' },
-                { value: 'vision-generate', label: '  ↳ Generate Vision Response' },
-
-                { value: 'group-settings', label: '⚙️ Settings' },
-                { value: 'login', label: '  ↳ Update API Key' },
-                { value: 'exit', label: '  ↳ Exit' }
-            ],
-        });
-
-        if (isCancel(operation) || operation === 'exit') {
-            outro('Goodbye!');
-            process.exit(0);
-        }
-
-        // Handle separation headers if selected by mistake (though select usually prevents this if implemented as headers, clack updates might be needed. 
-        // Here we just use them as labeled options to mimic headers. If selected, just recurring.)
-        if (typeof operation === 'string' && operation.startsWith('group-')) {
-            // Recursive call to show menu again if a "header" is clicked
-            // But main() is async, so we might exit. Let's just restart the process or loop.
-            // Simpler: Just rerun main (beware stack) or wrapped loop.
-            // For now, let's just exit or handle it gracefully. 
-            // Better UX: make them unselectable if possible, or just re-prompt.
-            outro(yellow('Please select a specific action below the header.'));
-            process.exit(0);
-        }
-
-        try {
-            // Re-read config in case it was just set
-            const currentConfig = getConfig();
-            const currentVision = new Langvision({ apiKey: currentConfig.apiKey });
-            const currentTune = new Langtune({ apiKey: currentConfig.apiKey });
-
-            if (operation === 'login') {
-                await handleLogin();
-            } else if (operation === 'tune-finetune') {
-                await handleTuneFinetune(currentTune);
-            } else if (operation === 'tune-generate') {
-                await handleTuneGenerate(currentTune);
-            } else if (operation === 'vision-finetune') {
-                await handleVisionFinetune(currentVision);
-            } else if (operation === 'vision-generate') {
-                await handleVisionGenerate(currentVision);
+                        await handler(clients);
+                    } catch (error: any) {
+                        outro(red(`Error: ${error.message}`));
+                    }
+                }
             }
-        } catch (error: any) {
-            outro(red(`Error: ${error.message}`));
-            process.exit(1);
         }
-
-        outro(green('Operation completed successfully!'));
     });
 
     program.parse(process.argv);
@@ -157,6 +145,214 @@ async function handleLogin() {
     const config = getConfig();
     saveConfig({ ...config, apiKey });
     intro(green('API Key updated successfully!'));
+}
+
+async function handleSubscriptionStatus() {
+    const config = getConfig();
+    if (!config.apiKey) {
+        intro(red('Not logged in. Run "login" first.'));
+        return;
+    }
+    const client = new SubscriptionClient({ apiKey: config.apiKey });
+    const s = spinner();
+    s.start('Fetching subscription status...');
+    try {
+        const info = await client.getStatus();
+        s.stop(green('Subscription Status:'));
+
+        console.log(gray('Plan: ') + (info.plan === 'pro' ? bgCyan(' PRO ') : info.plan.toUpperCase()));
+        console.log(gray('Active: ') + (info.is_active ? green('Yes') : red('No')));
+        if (info.expires_at) console.log(gray('Expires: ') + new Date(info.expires_at).toLocaleDateString());
+
+        console.log(gray('\nLimits:'));
+        console.log(`  Models: ${info.limits.max_models === -1 ? 'Unlimited' : info.limits.max_models}`);
+        console.log(`  Training Jobs: ${info.limits.max_training_jobs}`);
+
+    } catch (e: any) {
+        s.stop(red('Failed to fetch status.'));
+        console.error(e.message);
+    }
+}
+
+async function handleAgentCreate(client: AgentClient) {
+    const name = await text({
+        message: 'Agent Name:',
+        placeholder: 'e.g. Support Bot',
+        validate(value) {
+            if (!value || value.length === 0) return 'API Key is required';
+        },
+    });
+    if (isCancel(name)) return;
+
+    const description = await text({
+        message: 'Description:',
+        placeholder: 'e.g. A helpful support assistant',
+    });
+    if (isCancel(description)) return;
+
+    const systemPrompt = await text({
+        message: 'System Prompt:',
+        placeholder: 'e.g. You are a helpful assistant.',
+        initialValue: 'You are a helpful assistant.'
+    });
+    if (isCancel(systemPrompt)) return;
+
+    const s = spinner();
+    s.start('Creating agent...');
+
+    try {
+        // We need a workspace ID. server usually infers it from API key context if not provided?
+        // But the schema says workspace_id is required in AgentCreate.
+        // The server implementation of create_agent takes AgentCreate which has workspace_id.
+        // However, standard users might not know their exact workspace UUID. 
+        // We might need to fetch it or rely on server to fill it if we made it optional in schema (which we didn't).
+        // EDIT: Let's fetch one agent to get the workspace_id or assume one?
+        // Better: List agents, get workspace_id from first one. Hacky but works for single-workspace users.
+        // Use 'default' or similar if server supports it?
+        // Checking agents.py: verify_api_key returns workspace_id.
+        // But create_agent payload requires it.
+        // I'll try to fetch list first to get workspace ID. If list empty, we are stuck?
+        // Wait, list_agents returns `AgentListResponse` which doesn't explicitly return workspace_id at top level, but agents have it.
+        // If no agents, we can't guess it.
+        // Maybe I should fetch user profile? No endpoint for that in CLI yet.
+        // I'll try to pass a placeholder and hope server ignores it if it uses context?
+        // Server code: `workspace_id=agent_in.workspace_id`. It uses payload.
+        // I might need to ask user for workspace ID or update server to be smarter.
+        // For now, I'll attempt to LIST agents to get a workspace ID.
+
+        const agents = await client.list();
+        let workspaceId = "";
+        if (agents.length > 0) {
+            workspaceId = agents[0].workspace_id;
+        } else {
+            // Fallback: Ask user or fail?
+            // Or maybe decoding JWT/API key client side? No.
+            // I'll prompt for it if not found, with a hint.
+            s.stop(yellow('Workspace ID needed (no existing agents found).'));
+            const wid = await text({
+                message: 'Enter Workspace ID (UUID):',
+                validate(value) {
+                    if (!value || value.length === 0) return 'Required';
+                },
+            });
+            if (isCancel(wid)) return;
+            workspaceId = wid as string;
+            s.start('Creating agent...');
+        }
+
+        const agent = await client.create({
+            workspace_id: workspaceId,
+            name: name as string,
+            description: description as string,
+            config: {
+                system_prompt: systemPrompt as string,
+                model: 'gpt-4o' // Default or prompt? simplified
+            }
+        });
+        s.stop(green(`Agent "${agent.name}" created successfully! ID: ${agent.id}`));
+    } catch (e: any) {
+        s.stop(red('Failed to create agent.'));
+        throw e;
+    }
+}
+
+async function handleAgentDelete(client: AgentClient) {
+    const s = spinner();
+    s.start('Fetching agents...');
+    const agents = await client.list();
+    s.stop(`Found ${agents.length} agents`);
+
+    if (agents.length === 0) {
+        intro(yellow('No agents to delete.'));
+        return;
+    }
+
+    const agentId = await select({
+        message: 'Select an agent to DELETE:',
+        options: agents.map(a => ({ value: a.id, label: a.name, hint: a.description || 'No description' }))
+    });
+
+    if (isCancel(agentId)) return;
+
+    const confirm = await select({
+        message: `Are you sure you want to delete this agent?`,
+        options: [
+            { value: 'yes', label: 'Yes, delete it', hint: 'Cannot be undone' },
+            { value: 'no', label: 'No, keep it' }
+        ]
+    });
+
+    if (confirm !== 'yes') {
+        intro(gray('Deletion cancelled.'));
+        return;
+    }
+
+    const d = spinner();
+    d.start('Deleting agent...');
+    try {
+        await client.delete(agentId as string);
+        d.stop(green('Agent deleted successfully.'));
+    } catch (e: any) {
+        d.stop(red('Failed to delete agent.'));
+        throw e;
+    }
+}
+
+async function handleAgentList(client: AgentClient) {
+    const s = spinner();
+    s.start('Fetching agents...');
+    const agents = await client.list();
+    s.stop(`Found ${agents.length} agents`);
+
+    if (agents.length === 0) {
+        intro(yellow('No agents found in your workspace.'));
+        return;
+    }
+
+    const agentId = await select({
+        message: 'Select an agent to run:',
+        options: agents.map(a => ({ value: a.id, label: a.name, hint: a.description || 'No description' }))
+    });
+
+    if (isCancel(agentId)) return;
+
+    await handleAgentRun(client, agentId as string, agents.find(a => a.id === agentId)?.name || 'Agent');
+}
+
+async function handleAgentRun(client: AgentClient, agentId: string, agentName: string) {
+    intro(bgCyan(black(` Chatting with ${agentName} `)));
+    console.log(gray('Type "exit" to quit conversation.'));
+
+    let conversationId: string | undefined = undefined;
+
+    while (true) {
+        const input = await text({
+            message: 'You:',
+            placeholder: 'Type a message...',
+        });
+
+        if (isCancel(input) || input === 'exit') {
+            break;
+        }
+
+        const s = spinner();
+        s.start('Agent is thinking...');
+        try {
+            const result = await client.execute(agentId, { prompt: input }, [], conversationId);
+            s.stop();
+
+            if (result.output && result.output.response) {
+                console.log(gradient.pastel(`Agent: ${result.output.response}`));
+            } else {
+                console.log(gradient.pastel(`Agent: ${JSON.stringify(result.output)}`));
+            }
+
+            conversationId = result.conversation_id;
+        } catch (e: any) {
+            s.stop(red('Error running agent.'));
+            console.error(e);
+        }
+    }
 }
 
 
@@ -187,10 +383,60 @@ async function handleTuneFinetune(tune: Langtune) {
     });
     if (isCancel(epochs)) cancel('Operation cancelled.');
 
+    const track = await select({
+        message: 'Track this job on Langtrain Cloud?',
+        options: [
+            { value: 'yes', label: 'Yes', hint: 'Upload dataset and log job' },
+            { value: 'no', label: 'No', hint: 'Local only' }
+        ]
+    });
+    if (isCancel(track)) cancel('Operation cancelled.');
+
+    if (track === 'yes') {
+        const s = spinner();
+        s.start('Connecting to Cloud...');
+        try {
+            const config = getConfig();
+            if (!config.apiKey) throw new Error('API Key required. Run "login" first.');
+
+            // Check Subscription
+            const subClient = new SubscriptionClient({ apiKey: config.apiKey });
+            const sub = await subClient.getStatus();
+            if (!sub.features.includes('cloud_finetuning')) {
+                s.stop(red('Feature "cloud_finetuning" is not available on your plan.'));
+                const upgrade = await confirm({ message: 'Upgrade to Pro for cloud tracking?' });
+                if (upgrade && !isCancel(upgrade)) {
+                    console.log(bgCyan(black(' Visit https://langtrain.ai/dashboard/billing to upgrade. ')));
+                }
+                return;
+            }
+
+            const fileClient = new FileClient({ apiKey: config.apiKey });
+            const trainingClient = new TrainingClient({ apiKey: config.apiKey });
+
+            s.message('Uploading dataset...');
+            const fileResp = await fileClient.upload(trainFile as string);
+
+            s.message('Creating Job...');
+            const job = await trainingClient.createJob({
+                name: `cli-sft-${Date.now()}`,
+                base_model: model as string,
+                dataset_id: fileResp.id,
+                task: 'text',
+                hyperparameters: {
+                    n_epochs: parseInt(epochs as string)
+                }
+            });
+            s.stop(green(`Job tracked: ${job.id}`));
+        } catch (e: any) {
+            s.stop(red(`Tracking failed: ${e.message}`));
+            const cont = await confirm({ message: 'Continue with local training anyway?' });
+            if (!cont || isCancel(cont)) return;
+        }
+    }
+
     const s = spinner();
-    s.start('Connecting to Langtrain Cloud...');
-    await new Promise(r => setTimeout(r, 800)); // Simulatoin
-    s.message('Starting fine-tuning job...');
+    s.start('Starting local fine-tuning...');
 
     try {
         // Check if FinetuneConfig types match what's needed. 
@@ -264,6 +510,60 @@ async function handleVisionFinetune(vision: Langvision) {
         placeholder: '3',
         initialValue: '3'
     });
+    if (isCancel(epochs)) cancel('Operation cancelled');
+
+    const track = await select({
+        message: 'Track this job on Langtrain Cloud?',
+        options: [
+            { value: 'yes', label: 'Yes', hint: 'Upload dataset and log job' },
+            { value: 'no', label: 'No', hint: 'Local only' }
+        ]
+    });
+    if (isCancel(track)) cancel('Operation cancelled');
+
+    if (track === 'yes') {
+        const s = spinner();
+        s.start('Connecting to Cloud...');
+        try {
+            const config = getConfig();
+            if (!config.apiKey) throw new Error('API Key required. Run "login" first.');
+
+            // Check Subscription
+            const subClient = new SubscriptionClient({ apiKey: config.apiKey });
+            const sub = await subClient.getStatus();
+            if (!sub.features.includes('cloud_finetuning')) {
+                s.stop(red('Feature "cloud_finetuning" is not available on your plan.'));
+                const upgrade = await confirm({ message: 'Upgrade to Pro for cloud tracking?' });
+                if (upgrade && !isCancel(upgrade)) {
+                    console.log(bgCyan(black(' Visit https://langtrain.ai/dashboard/billing to upgrade. ')));
+                }
+                return;
+            }
+
+            const fileClient = new FileClient({ apiKey: config.apiKey });
+            const trainingClient = new TrainingClient({ apiKey: config.apiKey });
+
+            s.message('Uploading dataset...');
+            const fileResp = await fileClient.upload(dataset as string, undefined, 'fine-tune-vision');
+
+            s.message('Creating Job...');
+            const job = await trainingClient.createJob({
+                name: `cli-vision-${Date.now()}`,
+                base_model: model as string,
+                dataset_id: fileResp.id,
+                task: 'vision',
+                training_method: 'lora',
+                hyperparameters: {
+                    n_epochs: parseInt(epochs as string)
+                }
+            });
+            s.stop(green(`Job tracked: ${job.id}`));
+        } catch (e: any) {
+            s.stop(red(`Tracking failed: ${e.message}`));
+            const cont = await confirm({ message: 'Continue with local training anyway?' });
+            if (!cont || isCancel(cont)) return;
+        }
+    }
 
     const s = spinner();
     s.start('Analyzing dataset structure...');
