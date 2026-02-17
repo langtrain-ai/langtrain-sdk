@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="logo.svg" alt="Langtrain Logo" width="120" height="auto" />
+  <img src="https://raw.githubusercontent.com/langtrain-ai/langtrain-sdk/main/logo.svg" alt="Langtrain Logo" width="120" height="auto" />
   <h1>Langtrain SDK</h1>
   <p>
     The unified intelligence layer for JavaScript applications. <br/>

@@ -19,6 +19,10 @@
     "llm",
     "finetuning"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/langtrain-ai/langtrain-sdk.git"
+  },
   "author": "Langtrain AI",
   "license": "MIT",
   "devDependencies": {
