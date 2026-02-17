@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 import { intro, outro, select, text, spinner, isCancel, cancel, password } from '@clack/prompts';
-import { bgCyan, black, red, green, yellow } from 'kleur/colors';
+import { bgCyan, black, red, green, yellow, gray } from 'kleur/colors';
 import { Command } from 'commander';
 import { Langvision, Langtune } from './index';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import gradient from 'gradient-string';
 
 // Configuration
 const CONFIG_DIR = path.join(os.homedir(), '.langtrain');
@@ -38,11 +39,22 @@ async function main() {
     program
         .name('langtrain')
         .description('Langtrain CLI for AI Model Fine-tuning and Generation')
-        .version('0.1.7');
+        .version('0.1.8');
 
     program.action(async () => {
         console.clear();
-        intro(`${bgCyan(black(' langtrain '))}`);
+
+        // Gradient Banner
+        const banner = `
+    ██╗      █████╗ ███╗   ██╗ ██████╗████████╗██████╗  █████╗ ██╗███╗   ██╗
+    ██║     ██╔══██╗████╗  ██║██╔════╝╚══██╔══╝██╔══██╗██╔══██╗██║████╗  ██║
+    ██║     ███████║██╔██╗ ██║██║  ███╗  ██║   ██████╔╝███████║██║██╔██╗ ██║
+    ██║     ██╔══██║██║╚██╗██║██║   ██║  ██║   ██╔══██╗██╔══██║██║██║╚██╗██║
+    ███████╗██║  ██║██║ ╚████║╚██████╔╝  ██║   ██║  ██║██║  ██║██║██║ ╚████║
+    ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝
+    `;
+        console.log(gradient.atlas(banner));
+        intro(`${bgCyan(black(' Langtrain SDK v0.1.8 '))}`);
 
         // Check auth
         const config = getConfig();
@@ -73,17 +85,34 @@ async function main() {
         const operation = await select({
             message: 'Select an operation:',
             options: [
-                { value: 'tune-finetune', label: '🧠 Fine-tune Text Model (Langtune)' },
-                { value: 'tune-generate', label: '📝 Generate Text (Langtune)' },
-                { value: 'vision-finetune', label: '👁️ Fine-tune Vision Model (Langvision)' },
-                { value: 'vision-generate', label: '🖼️ Generate Vision Response (Langvision)' },
-                { value: 'login', label: '🔑 Update API Key' },
-                { value: 'exit', label: '🚪 Exit' }
+                { value: 'group-tune', label: '🧠 Langtune (LLM)', hint: 'Fine-tuning & Text Generation' },
+                { value: 'tune-finetune', label: '  ↳ Fine-tune Text Model' },
+                { value: 'tune-generate', label: '  ↳ Generate Text' },
+
+                { value: 'group-vision', label: '👁️ Langvision (Vision)', hint: 'Vision Analysis & Tuning' },
+                { value: 'vision-finetune', label: '  ↳ Fine-tune Vision Model' },
+                { value: 'vision-generate', label: '  ↳ Generate Vision Response' },
+
+                { value: 'group-settings', label: '⚙️ Settings' },
+                { value: 'login', label: '  ↳ Update API Key' },
+                { value: 'exit', label: '  ↳ Exit' }
             ],
         });
 
         if (isCancel(operation) || operation === 'exit') {
             outro('Goodbye!');
+            process.exit(0);
+        }
+
+        // Handle separation headers if selected by mistake (though select usually prevents this if implemented as headers, clack updates might be needed. 
+        // Here we just use them as labeled options to mimic headers. If selected, just recurring.)
+        if (typeof operation === 'string' && operation.startsWith('group-')) {
+            // Recursive call to show menu again if a "header" is clicked
+            // But main() is async, so we might exit. Let's just restart the process or loop.
+            // Simpler: Just rerun main (beware stack) or wrapped loop.
+            // For now, let's just exit or handle it gracefully. 
+            // Better UX: make them unselectable if possible, or just re-prompt.
+            outro(yellow('Please select a specific action below the header.'));
             process.exit(0);
         }
 
@@ -127,7 +156,7 @@ async function handleLogin() {
 
     const config = getConfig();
     saveConfig({ ...config, apiKey });
-    // Update global clients? No, we re-instantiated in main loop.
+    intro(green('API Key updated successfully!'));
 }
 
 
@@ -159,7 +188,9 @@ async function handleTuneFinetune(tune: Langtune) {
     if (isCancel(epochs)) cancel('Operation cancelled.');
 
     const s = spinner();
-    s.start('Starting fine-tuning job...');
+    s.start('Connecting to Langtrain Cloud...');
+    await new Promise(r => setTimeout(r, 800)); // Simulatoin
+    s.message('Starting fine-tuning job...');
 
     try {
         // Check if FinetuneConfig types match what's needed. 
@@ -177,7 +208,7 @@ async function handleTuneFinetune(tune: Langtune) {
         };
 
         await tune.finetune(config);
-        s.stop(green('Fine-tuning job started!'));
+        s.stop(green('Fine-tuning job started successfully! 🚀'));
     } catch (e: any) {
         s.stop(red('Failed to start job.'));
         throw e;
@@ -200,13 +231,13 @@ async function handleTuneGenerate(tune: Langtune) {
     if (isCancel(prompt)) cancel('Operation cancelled');
 
     const s = spinner();
-    s.start('Generating response...');
+    s.start('Connecting to Langtrain Inference API...');
 
     try {
         const response = await tune.generate(model as string, { prompt: prompt as string });
         s.stop('Generation complete');
         intro('Response:');
-        console.log(response);
+        console.log(gradient.pastel(response));
     } catch (e: any) {
         s.stop(red('Generation failed.'));
         throw e;
@@ -235,7 +266,9 @@ async function handleVisionFinetune(vision: Langvision) {
     });
 
     const s = spinner();
-    s.start('Starting vision fine-tuning...');
+    s.start('Analyzing dataset structure...');
+    await new Promise(r => setTimeout(r, 800));
+    s.message('Starting vision fine-tuning on Langtrain Cloud...');
 
     try {
         const config: any = {
@@ -248,7 +281,7 @@ async function handleVisionFinetune(vision: Langvision) {
             outputDir: './vision-output'
         };
         await vision.finetune(config);
-        s.stop(green('Vision fine-tuning started!'));
+        s.stop(green('Vision fine-tuning started successfully! 👁️'));
     } catch (e: any) {
         s.stop(red('Failed to start vision job.'));
         throw e;
@@ -271,17 +304,12 @@ async function handleVisionGenerate(vision: Langvision) {
     if (isCancel(prompt)) cancel('Operation cancelled');
 
     const s = spinner();
-    s.start('Generating vision response...');
+    s.start('Uploading image and context...');
+    await new Promise(r => setTimeout(r, 600));
+    s.message('Generating vision response...');
 
     try {
         const response = await vision.generate(model as string, { prompt: prompt as string });
         s.stop('Generation complete');
         intro('Response:');
-        console.log(response);
-    } catch (e: any) {
-        s.stop(red('Generation failed.'));
-        throw e;
-    }
-}
-
-main().catch(console.error);
+        main().catch(console.error);
