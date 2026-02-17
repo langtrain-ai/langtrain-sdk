@@ -5,6 +5,9 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "langtrain": "./dist/cli.js"
+  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -26,9 +29,15 @@
   "author": "Langtrain AI",
   "license": "MIT",
   "devDependencies": {
-    "langvision": "file:../langvision/js",
+    "@types/node": "^25.2.3",
     "langtune": "file:../langtune/js",
+    "langvision": "file:../langvision/js",
     "tsup": "^8.0.2",
     "typescript": "^5.4.2"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.0.1",
+    "commander": "^14.0.3",
+    "kleur": "^4.1.5"
   }
 }
