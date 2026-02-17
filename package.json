@@ -1,6 +1,6 @@
 {
   "name": "langtrain",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Unified JavaScript SDK for Langtrain Ecosystem",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
