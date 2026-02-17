@@ -46,8 +46,8 @@ var require_windows = __commonJS({
     "use strict";
     module2.exports = isexe;
     isexe.sync = sync;
-    var fs = require("fs");
-    function checkPathExt(path5, options) {
+    var fs2 = require("fs");
+    function checkPathExt(path6, options) {
       var pathext = options.pathExt !== void 0 ? options.pathExt : process.env.PATHEXT;
       if (!pathext) {
         return true;
@@ -58,25 +58,25 @@ var require_windows = __commonJS({
       }
       for (var i = 0; i < pathext.length; i++) {
         var p = pathext[i].toLowerCase();
-        if (p && path5.substr(-p.length).toLowerCase() === p) {
+        if (p && path6.substr(-p.length).toLowerCase() === p) {
           return true;
         }
       }
       return false;
     }
-    function checkStat(stat, path5, options) {
+    function checkStat(stat, path6, options) {
       if (!stat.isSymbolicLink() && !stat.isFile()) {
         return false;
       }
-      return checkPathExt(path5, options);
+      return checkPathExt(path6, options);
     }
-    function isexe(path5, options, cb) {
-      fs.stat(path5, function(er, stat) {
-        cb(er, er ? false : checkStat(stat, path5, options));
+    function isexe(path6, options, cb) {
+      fs2.stat(path6, function(er, stat) {
+        cb(er, er ? false : checkStat(stat, path6, options));
       });
     }
-    function sync(path5, options) {
-      return checkStat(fs.statSync(path5), path5, options);
+    function sync(path6, options) {
+      return checkStat(fs2.statSync(path6), path6, options);
     }
   }
 });
@@ -87,14 +87,14 @@ var require_mode = __commonJS({
     "use strict";
     module2.exports = isexe;
     isexe.sync = sync;
-    var fs = require("fs");
-    function isexe(path5, options, cb) {
-      fs.stat(path5, function(er, stat) {
+    var fs2 = require("fs");
+    function isexe(path6, options, cb) {
+      fs2.stat(path6, function(er, stat) {
         cb(er, er ? false : checkStat(stat, options));
       });
     }
-    function sync(path5, options) {
-      return checkStat(fs.statSync(path5), options);
+    function sync(path6, options) {
+      return checkStat(fs2.statSync(path6), options);
     }
     function checkStat(stat, options) {
       return stat.isFile() && checkMode(stat, options);
@@ -119,7 +119,7 @@ var require_mode = __commonJS({
 var require_isexe = __commonJS({
   "../langvision/js/node_modules/isexe/index.js"(exports2, module2) {
     "use strict";
-    var fs = require("fs");
+    var fs2 = require("fs");
     var core;
     if (process.platform === "win32" || global.TESTING_WINDOWS) {
       core = require_windows();
@@ -128,7 +128,7 @@ var require_isexe = __commonJS({
     }
     module2.exports = isexe;
     isexe.sync = sync;
-    function isexe(path5, options, cb) {
+    function isexe(path6, options, cb) {
       if (typeof options === "function") {
         cb = options;
         options = {};
@@ -138,7 +138,7 @@ var require_isexe = __commonJS({
           throw new TypeError("callback not provided");
         }
         return new Promise(function(resolve, reject) {
-          isexe(path5, options || {}, function(er, is) {
+          isexe(path6, options || {}, function(er, is) {
             if (er) {
               reject(er);
             } else {
@@ -147,7 +147,7 @@ var require_isexe = __commonJS({
           });
         });
       }
-      core(path5, options || {}, function(er, is) {
+      core(path6, options || {}, function(er, is) {
         if (er) {
           if (er.code === "EACCES" || options && options.ignoreErrors) {
             er = null;
@@ -157,9 +157,9 @@ var require_isexe = __commonJS({
         cb(er, is);
       });
     }
-    function sync(path5, options) {
+    function sync(path6, options) {
       try {
-        return core.sync(path5, options || {});
+        return core.sync(path6, options || {});
       } catch (er) {
         if (options && options.ignoreErrors || er.code === "EACCES") {
           return false;
@@ -176,7 +176,7 @@ var require_which = __commonJS({
   "../langvision/js/node_modules/which/which.js"(exports2, module2) {
     "use strict";
     var isWindows = process.platform === "win32" || process.env.OSTYPE === "cygwin" || process.env.OSTYPE === "msys";
-    var path5 = require("path");
+    var path6 = require("path");
     var COLON = isWindows ? ";" : ":";
     var isexe = require_isexe();
     var getNotFoundError = (cmd) => Object.assign(new Error(`not found: ${cmd}`), { code: "ENOENT" });
@@ -214,7 +214,7 @@ var require_which = __commonJS({
           return opt.all && found.length ? resolve(found) : reject(getNotFoundError(cmd));
         const ppRaw = pathEnv[i];
         const pathPart = /^".*"$/.test(ppRaw) ? ppRaw.slice(1, -1) : ppRaw;
-        const pCmd = path5.join(pathPart, cmd);
+        const pCmd = path6.join(pathPart, cmd);
         const p = !pathPart && /^\.[\\\/]/.test(cmd) ? cmd.slice(0, 2) + pCmd : pCmd;
         resolve(subStep(p, i, 0));
       });
@@ -241,7 +241,7 @@ var require_which = __commonJS({
       for (let i = 0; i < pathEnv.length; i++) {
         const ppRaw = pathEnv[i];
         const pathPart = /^".*"$/.test(ppRaw) ? ppRaw.slice(1, -1) : ppRaw;
-        const pCmd = path5.join(pathPart, cmd);
+        const pCmd = path6.join(pathPart, cmd);
         const p = !pathPart && /^\.[\\\/]/.test(cmd) ? cmd.slice(0, 2) + pCmd : pCmd;
         for (let j = 0; j < pathExt.length; j++) {
           const cur = p + pathExt[j];
@@ -289,7 +289,7 @@ var require_path_key = __commonJS({
 var require_resolveCommand = __commonJS({
   "../langvision/js/node_modules/cross-spawn/lib/util/resolveCommand.js"(exports2, module2) {
     "use strict";
-    var path5 = require("path");
+    var path6 = require("path");
     var which = require_which();
     var getPathKey = require_path_key();
     function resolveCommandAttempt(parsed, withoutPathExt) {
@@ -307,7 +307,7 @@ var require_resolveCommand = __commonJS({
       try {
         resolved = which.sync(parsed.command, {
           path: env[getPathKey({ env })],
-          pathExt: withoutPathExt ? path5.delimiter : void 0
+          pathExt: withoutPathExt ? path6.delimiter : void 0
         });
       } catch (e) {
       } finally {
@@ -316,7 +316,7 @@ var require_resolveCommand = __commonJS({
         }
       }
       if (resolved) {
-        resolved = path5.resolve(hasCustomCwd ? parsed.options.cwd : "", resolved);
+        resolved = path6.resolve(hasCustomCwd ? parsed.options.cwd : "", resolved);
       }
       return resolved;
     }
@@ -370,8 +370,8 @@ var require_shebang_command = __commonJS({
       if (!match) {
         return null;
       }
-      const [path5, argument] = match[0].replace(/#! ?/, "").split(" ");
-      const binary = path5.split("/").pop();
+      const [path6, argument] = match[0].replace(/#! ?/, "").split(" ");
+      const binary = path6.split("/").pop();
       if (binary === "env") {
         return argument;
       }
@@ -384,16 +384,16 @@ var require_shebang_command = __commonJS({
 var require_readShebang = __commonJS({
   "../langvision/js/node_modules/cross-spawn/lib/util/readShebang.js"(exports2, module2) {
     "use strict";
-    var fs = require("fs");
+    var fs2 = require("fs");
     var shebangCommand = require_shebang_command();
     function readShebang(command) {
       const size = 150;
       const buffer = Buffer.alloc(size);
       let fd;
       try {
-        fd = fs.openSync(command, "r");
-        fs.readSync(fd, buffer, 0, size, 0);
-        fs.closeSync(fd);
+        fd = fs2.openSync(command, "r");
+        fs2.readSync(fd, buffer, 0, size, 0);
+        fs2.closeSync(fd);
       } catch (e) {
       }
       return shebangCommand(buffer.toString());
@@ -406,7 +406,7 @@ var require_readShebang = __commonJS({
 var require_parse = __commonJS({
   "../langvision/js/node_modules/cross-spawn/lib/parse.js"(exports2, module2) {
     "use strict";
-    var path5 = require("path");
+    var path6 = require("path");
     var resolveCommand = require_resolveCommand();
     var escape = require_escape();
     var readShebang = require_readShebang();
@@ -431,7 +431,7 @@ var require_parse = __commonJS({
       const needsShell = !isExecutableRegExp.test(commandFile);
       if (parsed.options.forceShell || needsShell) {
         const needsDoubleEscapeMetaChars = isCmdShimRegExp.test(commandFile);
-        parsed.command = path5.normalize(parsed.command);
+        parsed.command = path6.normalize(parsed.command);
         parsed.command = escape.command(parsed.command);
         parsed.args = parsed.args.map((arg) => escape.argument(arg, needsDoubleEscapeMetaChars));
         const shellCommand = [parsed.command].concat(parsed.args).join(" ");
@@ -587,8 +587,8 @@ var require_windows2 = __commonJS({
     "use strict";
     module2.exports = isexe;
     isexe.sync = sync;
-    var fs = require("fs");
-    function checkPathExt(path5, options) {
+    var fs2 = require("fs");
+    function checkPathExt(path6, options) {
       var pathext = options.pathExt !== void 0 ? options.pathExt : process.env.PATHEXT;
       if (!pathext) {
         return true;
@@ -599,25 +599,25 @@ var require_windows2 = __commonJS({
       }
       for (var i = 0; i < pathext.length; i++) {
         var p = pathext[i].toLowerCase();
-        if (p && path5.substr(-p.length).toLowerCase() === p) {
+        if (p && path6.substr(-p.length).toLowerCase() === p) {
           return true;
         }
       }
       return false;
     }
-    function checkStat(stat, path5, options) {
+    function checkStat(stat, path6, options) {
       if (!stat.isSymbolicLink() && !stat.isFile()) {
         return false;
       }
-      return checkPathExt(path5, options);
+      return checkPathExt(path6, options);
     }
-    function isexe(path5, options, cb) {
-      fs.stat(path5, function(er, stat) {
-        cb(er, er ? false : checkStat(stat, path5, options));
+    function isexe(path6, options, cb) {
+      fs2.stat(path6, function(er, stat) {
+        cb(er, er ? false : checkStat(stat, path6, options));
       });
     }
-    function sync(path5, options) {
-      return checkStat(fs.statSync(path5), path5, options);
+    function sync(path6, options) {
+      return checkStat(fs2.statSync(path6), path6, options);
     }
   }
 });
@@ -628,14 +628,14 @@ var require_mode2 = __commonJS({
     "use strict";
     module2.exports = isexe;
     isexe.sync = sync;
-    var fs = require("fs");
-    function isexe(path5, options, cb) {
-      fs.stat(path5, function(er, stat) {
+    var fs2 = require("fs");
+    function isexe(path6, options, cb) {
+      fs2.stat(path6, function(er, stat) {
         cb(er, er ? false : checkStat(stat, options));
       });
     }
-    function sync(path5, options) {
-      return checkStat(fs.statSync(path5), options);
+    function sync(path6, options) {
+      return checkStat(fs2.statSync(path6), options);
     }
     function checkStat(stat, options) {
       return stat.isFile() && checkMode(stat, options);
@@ -660,7 +660,7 @@ var require_mode2 = __commonJS({
 var require_isexe2 = __commonJS({
   "../langtune/js/node_modules/isexe/index.js"(exports2, module2) {
     "use strict";
-    var fs = require("fs");
+    var fs2 = require("fs");
     var core;
     if (process.platform === "win32" || global.TESTING_WINDOWS) {
       core = require_windows2();
@@ -669,7 +669,7 @@ var require_isexe2 = __commonJS({
     }
     module2.exports = isexe;
     isexe.sync = sync;
-    function isexe(path5, options, cb) {
+    function isexe(path6, options, cb) {
       if (typeof options === "function") {
         cb = options;
         options = {};
@@ -679,7 +679,7 @@ var require_isexe2 = __commonJS({
           throw new TypeError("callback not provided");
         }
         return new Promise(function(resolve, reject) {
-          isexe(path5, options || {}, function(er, is) {
+          isexe(path6, options || {}, function(er, is) {
             if (er) {
               reject(er);
             } else {
@@ -688,7 +688,7 @@ var require_isexe2 = __commonJS({
           });
         });
       }
-      core(path5, options || {}, function(er, is) {
+      core(path6, options || {}, function(er, is) {
         if (er) {
           if (er.code === "EACCES" || options && options.ignoreErrors) {
             er = null;
@@ -698,9 +698,9 @@ var require_isexe2 = __commonJS({
         cb(er, is);
       });
     }
-    function sync(path5, options) {
+    function sync(path6, options) {
       try {
-        return core.sync(path5, options || {});
+        return core.sync(path6, options || {});
       } catch (er) {
         if (options && options.ignoreErrors || er.code === "EACCES") {
           return false;
@@ -717,7 +717,7 @@ var require_which2 = __commonJS({
   "../langtune/js/node_modules/which/which.js"(exports2, module2) {
     "use strict";
     var isWindows = process.platform === "win32" || process.env.OSTYPE === "cygwin" || process.env.OSTYPE === "msys";
-    var path5 = require("path");
+    var path6 = require("path");
     var COLON = isWindows ? ";" : ":";
     var isexe = require_isexe2();
     var getNotFoundError = (cmd) => Object.assign(new Error(`not found: ${cmd}`), { code: "ENOENT" });
@@ -755,7 +755,7 @@ var require_which2 = __commonJS({
           return opt.all && found.length ? resolve(found) : reject(getNotFoundError(cmd));
         const ppRaw = pathEnv[i];
         const pathPart = /^".*"$/.test(ppRaw) ? ppRaw.slice(1, -1) : ppRaw;
-        const pCmd = path5.join(pathPart, cmd);
+        const pCmd = path6.join(pathPart, cmd);
         const p = !pathPart && /^\.[\\\/]/.test(cmd) ? cmd.slice(0, 2) + pCmd : pCmd;
         resolve(subStep(p, i, 0));
       });
@@ -782,7 +782,7 @@ var require_which2 = __commonJS({
       for (let i = 0; i < pathEnv.length; i++) {
         const ppRaw = pathEnv[i];
         const pathPart = /^".*"$/.test(ppRaw) ? ppRaw.slice(1, -1) : ppRaw;
-        const pCmd = path5.join(pathPart, cmd);
+        const pCmd = path6.join(pathPart, cmd);
         const p = !pathPart && /^\.[\\\/]/.test(cmd) ? cmd.slice(0, 2) + pCmd : pCmd;
         for (let j = 0; j < pathExt.length; j++) {
           const cur = p + pathExt[j];
@@ -830,7 +830,7 @@ var require_path_key2 = __commonJS({
 var require_resolveCommand2 = __commonJS({
   "../langtune/js/node_modules/cross-spawn/lib/util/resolveCommand.js"(exports2, module2) {
     "use strict";
-    var path5 = require("path");
+    var path6 = require("path");
     var which = require_which2();
     var getPathKey = require_path_key2();
     function resolveCommandAttempt(parsed, withoutPathExt) {
@@ -848,7 +848,7 @@ var require_resolveCommand2 = __commonJS({
       try {
         resolved = which.sync(parsed.command, {
           path: env[getPathKey({ env })],
-          pathExt: withoutPathExt ? path5.delimiter : void 0
+          pathExt: withoutPathExt ? path6.delimiter : void 0
         });
       } catch (e) {
       } finally {
@@ -857,7 +857,7 @@ var require_resolveCommand2 = __commonJS({
         }
       }
       if (resolved) {
-        resolved = path5.resolve(hasCustomCwd ? parsed.options.cwd : "", resolved);
+        resolved = path6.resolve(hasCustomCwd ? parsed.options.cwd : "", resolved);
       }
       return resolved;
     }
@@ -911,8 +911,8 @@ var require_shebang_command2 = __commonJS({
       if (!match) {
         return null;
       }
-      const [path5, argument] = match[0].replace(/#! ?/, "").split(" ");
-      const binary = path5.split("/").pop();
+      const [path6, argument] = match[0].replace(/#! ?/, "").split(" ");
+      const binary = path6.split("/").pop();
       if (binary === "env") {
         return argument;
       }
@@ -925,16 +925,16 @@ var require_shebang_command2 = __commonJS({
 var require_readShebang2 = __commonJS({
   "../langtune/js/node_modules/cross-spawn/lib/util/readShebang.js"(exports2, module2) {
     "use strict";
-    var fs = require("fs");
+    var fs2 = require("fs");
     var shebangCommand = require_shebang_command2();
     function readShebang(command) {
       const size = 150;
       const buffer = Buffer.alloc(size);
       let fd;
       try {
-        fd = fs.openSync(command, "r");
-        fs.readSync(fd, buffer, 0, size, 0);
-        fs.closeSync(fd);
+        fd = fs2.openSync(command, "r");
+        fs2.readSync(fd, buffer, 0, size, 0);
+        fs2.closeSync(fd);
       } catch (e) {
       }
       return shebangCommand(buffer.toString());
@@ -947,7 +947,7 @@ var require_readShebang2 = __commonJS({
 var require_parse2 = __commonJS({
   "../langtune/js/node_modules/cross-spawn/lib/parse.js"(exports2, module2) {
     "use strict";
-    var path5 = require("path");
+    var path6 = require("path");
     var resolveCommand = require_resolveCommand2();
     var escape = require_escape2();
     var readShebang = require_readShebang2();
@@ -972,7 +972,7 @@ var require_parse2 = __commonJS({
       const needsShell = !isExecutableRegExp.test(commandFile);
       if (parsed.options.forceShell || needsShell) {
         const needsDoubleEscapeMetaChars = isCmdShimRegExp.test(commandFile);
-        parsed.command = path5.normalize(parsed.command);
+        parsed.command = path6.normalize(parsed.command);
         parsed.command = escape.command(parsed.command);
         parsed.args = parsed.args.map((arg) => escape.argument(arg, needsDoubleEscapeMetaChars));
         const shellCommand = [parsed.command].concat(parsed.args).join(" ");
@@ -3203,8 +3203,8 @@ function getErrorMap() {
 
 // ../langvision/js/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path6, errorMaps, issueData } = params;
+  const fullPath = [...path6, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -3320,11 +3320,11 @@ var errorUtil;
 
 // ../langvision/js/node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path6, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path6;
     this._key = key;
   }
   get path() {
@@ -6779,12 +6779,19 @@ var FinetuneConfigSchema = external_exports.object({
 var Langvision = class {
   constructor(options = {}) {
     this.cliPath = options.cliPath || "langvision";
+    this.apiKey = options.apiKey;
+  }
+  getEnv() {
+    return {
+      ...process.env,
+      LANGVISION_API_KEY: this.apiKey || process.env.LANGVISION_API_KEY
+    };
   }
   /**
    * Run a fine-tuning job using the local CLI
    */
-  async finetune(config) {
-    const validated = FinetuneConfigSchema.parse(config);
+  async finetune(config2) {
+    const validated = FinetuneConfigSchema.parse(config2);
     const args = [
       "train",
       "--model",
@@ -6803,7 +6810,10 @@ var Langvision = class {
       validated.outputDir
     ];
     try {
-      await execa(this.cliPath, args, { stdio: "inherit" });
+      await execa(this.cliPath, args, {
+        stdio: "inherit",
+        env: this.getEnv()
+      });
     } catch (error) {
       throw new Error(`Langvision fine-tuning failed: ${error}`);
     }
@@ -6826,7 +6836,9 @@ var Langvision = class {
       args.push("--temperature", options.temperature.toString());
     }
     try {
-      const { stdout } = await execa(this.cliPath, args);
+      const { stdout } = await execa(this.cliPath, args, {
+        env: this.getEnv()
+      });
       return stdout;
     } catch (error) {
       throw new Error(`Langvision generation failed: ${error}`);
@@ -8910,8 +8922,8 @@ function getErrorMap2() {
 
 // ../langtune/js/node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue2 = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path6, errorMaps, issueData } = params;
+  const fullPath = [...path6, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -9027,11 +9039,11 @@ var errorUtil2;
 
 // ../langtune/js/node_modules/zod/v3/types.js
 var ParseInputLazyPath2 = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path6, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path6;
     this._key = key;
   }
   get path() {
@@ -12489,12 +12501,19 @@ var FinetuneConfigSchema2 = external_exports2.object({
 var Langtune = class {
   constructor(options = {}) {
     this.cliPath = options.cliPath || "langtune";
+    this.apiKey = options.apiKey;
+  }
+  getEnv() {
+    return {
+      ...process.env,
+      LANGTUNE_API_KEY: this.apiKey || process.env.LANGTUNE_API_KEY
+    };
   }
   /**
    * Run a fine-tuning job using the local CLI
    */
-  async finetune(config) {
-    const validated = FinetuneConfigSchema2.parse(config);
+  async finetune(config2) {
+    const validated = FinetuneConfigSchema2.parse(config2);
     const args = [
       "train",
       "--model",
@@ -12521,7 +12540,10 @@ var Langtune = class {
       args.push("--use-lisa");
     }
     try {
-      await execa2(this.cliPath, args, { stdio: "inherit" });
+      await execa2(this.cliPath, args, {
+        stdio: "inherit",
+        env: this.getEnv()
+      });
     } catch (error) {
       throw new Error(`Langtune fine-tuning failed: ${error}`);
     }
@@ -12544,7 +12566,9 @@ var Langtune = class {
       args.push("--temperature", options.temperature.toString());
     }
     try {
-      const { stdout } = await execa2(this.cliPath, args);
+      const { stdout } = await execa2(this.cliPath, args, {
+        env: this.getEnv()
+      });
       return stdout;
     } catch (error) {
       throw new Error(`Langtune generation failed: ${error}`);
@@ -12553,14 +12577,51 @@ var Langtune = class {
 };
 
 // src/cli.ts
-var vision = new Langvision();
-var tune = new Langtune();
+var import_fs = __toESM(require("fs"));
+var import_path = __toESM(require("path"));
+var import_os = __toESM(require("os"));
+var CONFIG_DIR = import_path.default.join(import_os.default.homedir(), ".langtrain");
+var CONFIG_FILE = import_path.default.join(CONFIG_DIR, "config.json");
+function getConfig() {
+  if (!import_fs.default.existsSync(CONFIG_FILE)) return {};
+  try {
+    return JSON.parse(import_fs.default.readFileSync(CONFIG_FILE, "utf-8"));
+  } catch {
+    return {};
+  }
+}
+function saveConfig(config2) {
+  if (!import_fs.default.existsSync(CONFIG_DIR)) {
+    import_fs.default.mkdirSync(CONFIG_DIR, { recursive: true });
+  }
+  import_fs.default.writeFileSync(CONFIG_FILE, JSON.stringify(config2, null, 2));
+}
+var config = getConfig();
+var vision = new Langvision({ apiKey: config.apiKey });
+var tune = new Langtune({ apiKey: config.apiKey });
 async function main() {
   const program = new import_commander.Command();
-  program.name("langtrain").description("Langtrain CLI for AI Model Fine-tuning and Generation").version("0.1.5");
+  program.name("langtrain").description("Langtrain CLI for AI Model Fine-tuning and Generation").version("0.1.7");
   program.action(async () => {
     console.clear();
     (0, import_prompts.intro)(`${(0, import_colors.bgCyan)((0, import_colors.black)(" langtrain "))}`);
+    const config2 = getConfig();
+    if (!config2.apiKey) {
+      (0, import_prompts.intro)((0, import_colors.yellow)("Authentication required"));
+      const apiKey = await (0, import_prompts.password)({
+        message: "Enter your Langtrain API Key:",
+        validate(value) {
+          if (!value || value.length === 0) return "API Key is required";
+        }
+      });
+      if ((0, import_prompts.isCancel)(apiKey)) {
+        (0, import_prompts.cancel)("Operation cancelled");
+        process.exit(0);
+      }
+      saveConfig({ ...config2, apiKey });
+      (0, import_prompts.intro)((0, import_colors.green)("Successfully logged in!"));
+      const newConfig = getConfig();
+    }
     const operation = await (0, import_prompts.select)({
       message: "Select an operation:",
       options: [
@@ -12568,6 +12629,7 @@ async function main() {
         { value: "tune-generate", label: "\u{1F4DD} Generate Text (Langtune)" },
         { value: "vision-finetune", label: "\u{1F441}\uFE0F Fine-tune Vision Model (Langvision)" },
         { value: "vision-generate", label: "\u{1F5BC}\uFE0F Generate Vision Response (Langvision)" },
+        { value: "login", label: "\u{1F511} Update API Key" },
         { value: "exit", label: "\u{1F6AA} Exit" }
       ]
     });
@@ -12576,14 +12638,19 @@ async function main() {
       process.exit(0);
     }
     try {
-      if (operation === "tune-finetune") {
-        await handleTuneFinetune();
+      const currentConfig = getConfig();
+      const currentVision = new Langvision({ apiKey: currentConfig.apiKey });
+      const currentTune = new Langtune({ apiKey: currentConfig.apiKey });
+      if (operation === "login") {
+        await handleLogin();
+      } else if (operation === "tune-finetune") {
+        await handleTuneFinetune(currentTune);
       } else if (operation === "tune-generate") {
-        await handleTuneGenerate();
+        await handleTuneGenerate(currentTune);
       } else if (operation === "vision-finetune") {
-        await handleVisionFinetune();
+        await handleVisionFinetune(currentVision);
       } else if (operation === "vision-generate") {
-        await handleVisionGenerate();
+        await handleVisionGenerate(currentVision);
       }
     } catch (error) {
       (0, import_prompts.outro)((0, import_colors.red)(`Error: ${error.message}`));
@@ -12593,7 +12660,18 @@ async function main() {
   });
   program.parse(process.argv);
 }
-async function handleTuneFinetune() {
+async function handleLogin() {
+  const apiKey = await (0, import_prompts.password)({
+    message: "Enter your new Langtrain API Key:",
+    validate(value) {
+      if (!value || value.length === 0) return "API Key is required";
+    }
+  });
+  if ((0, import_prompts.isCancel)(apiKey)) (0, import_prompts.cancel)("Operation cancelled");
+  const config2 = getConfig();
+  saveConfig({ ...config2, apiKey });
+}
+async function handleTuneFinetune(tune2) {
   const model = await (0, import_prompts.text)({
     message: "Enter base model (e.g., gpt-3.5-turbo):",
     placeholder: "gpt-3.5-turbo",
@@ -12619,7 +12697,7 @@ async function handleTuneFinetune() {
   const s = (0, import_prompts.spinner)();
   s.start("Starting fine-tuning job...");
   try {
-    const config = {
+    const config2 = {
       model,
       trainFile,
       preset: "default",
@@ -12630,14 +12708,14 @@ async function handleTuneFinetune() {
       loraRank: 16,
       outputDir: "./output"
     };
-    await tune.finetune(config);
+    await tune2.finetune(config2);
     s.stop((0, import_colors.green)("Fine-tuning job started!"));
   } catch (e) {
     s.stop((0, import_colors.red)("Failed to start job."));
     throw e;
   }
 }
-async function handleTuneGenerate() {
+async function handleTuneGenerate(tune2) {
   const model = await (0, import_prompts.text)({
     message: "Enter model path:",
     placeholder: "./output/model",
@@ -12652,7 +12730,7 @@ async function handleTuneGenerate() {
   const s = (0, import_prompts.spinner)();
   s.start("Generating response...");
   try {
-    const response = await tune.generate(model, { prompt });
+    const response = await tune2.generate(model, { prompt });
     s.stop("Generation complete");
     (0, import_prompts.intro)("Response:");
     console.log(response);
@@ -12661,7 +12739,7 @@ async function handleTuneGenerate() {
     throw e;
   }
 }
-async function handleVisionFinetune() {
+async function handleVisionFinetune(vision2) {
   const model = await (0, import_prompts.text)({
     message: "Enter base vision model:",
     placeholder: "llava-v1.5-7b",
@@ -12681,7 +12759,7 @@ async function handleVisionFinetune() {
   const s = (0, import_prompts.spinner)();
   s.start("Starting vision fine-tuning...");
   try {
-    const config = {
+    const config2 = {
       model,
       dataset,
       epochs: parseInt(epochs),
@@ -12690,14 +12768,14 @@ async function handleVisionFinetune() {
       loraRank: 16,
       outputDir: "./vision-output"
     };
-    await vision.finetune(config);
+    await vision2.finetune(config2);
     s.stop((0, import_colors.green)("Vision fine-tuning started!"));
   } catch (e) {
     s.stop((0, import_colors.red)("Failed to start vision job."));
     throw e;
   }
 }
-async function handleVisionGenerate() {
+async function handleVisionGenerate(vision2) {
   const model = await (0, import_prompts.text)({
     message: "Enter model path:",
     placeholder: "./vision-output/model",
@@ -12713,7 +12791,7 @@ async function handleVisionGenerate() {
   const s = (0, import_prompts.spinner)();
   s.start("Generating vision response...");
   try {
-    const response = await vision.generate(model, { prompt });
+    const response = await vision2.generate(model, { prompt });
     s.stop("Generation complete");
     (0, import_prompts.intro)("Response:");
     console.log(response);

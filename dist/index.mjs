@@ -6785,6 +6785,13 @@ var FinetuneConfigSchema = external_exports.object({
 var Langvision = class {
   constructor(options = {}) {
     this.cliPath = options.cliPath || "langvision";
+    this.apiKey = options.apiKey;
+  }
+  getEnv() {
+    return {
+      ...process.env,
+      LANGVISION_API_KEY: this.apiKey || process.env.LANGVISION_API_KEY
+    };
   }
   /**
    * Run a fine-tuning job using the local CLI
@@ -6809,7 +6816,10 @@ var Langvision = class {
       validated.outputDir
     ];
     try {
-      await execa(this.cliPath, args, { stdio: "inherit" });
+      await execa(this.cliPath, args, {
+        stdio: "inherit",
+        env: this.getEnv()
+      });
     } catch (error) {
       throw new Error(`Langvision fine-tuning failed: ${error}`);
     }
@@ -6832,7 +6842,9 @@ var Langvision = class {
       args.push("--temperature", options.temperature.toString());
     }
     try {
-      const { stdout } = await execa(this.cliPath, args);
+      const { stdout } = await execa(this.cliPath, args, {
+        env: this.getEnv()
+      });
       return stdout;
     } catch (error) {
       throw new Error(`Langvision generation failed: ${error}`);
@@ -12502,6 +12514,13 @@ var FinetuneConfigSchema2 = external_exports2.object({
 var Langtune = class {
   constructor(options = {}) {
     this.cliPath = options.cliPath || "langtune";
+    this.apiKey = options.apiKey;
+  }
+  getEnv() {
+    return {
+      ...process.env,
+      LANGTUNE_API_KEY: this.apiKey || process.env.LANGTUNE_API_KEY
+    };
   }
   /**
    * Run a fine-tuning job using the local CLI
@@ -12534,7 +12553,10 @@ var Langtune = class {
       args.push("--use-lisa");
     }
     try {
-      await execa2(this.cliPath, args, { stdio: "inherit" });
+      await execa2(this.cliPath, args, {
+        stdio: "inherit",
+        env: this.getEnv()
+      });
     } catch (error) {
       throw new Error(`Langtune fine-tuning failed: ${error}`);
     }
@@ -12557,7 +12579,9 @@ var Langtune = class {
       args.push("--temperature", options.temperature.toString());
     }
     try {
-      const { stdout } = await execa2(this.cliPath, args);
+      const { stdout } = await execa2(this.cliPath, args, {
+        env: this.getEnv()
+      });
       return stdout;
     } catch (error) {
       throw new Error(`Langtune generation failed: ${error}`);

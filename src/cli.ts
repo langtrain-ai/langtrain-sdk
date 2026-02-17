@@ -1,12 +1,36 @@
 #!/usr/bin/env node
-import { intro, outro, select, text, spinner, isCancel, cancel } from '@clack/prompts';
-import { bgCyan, black, red, green } from 'kleur/colors';
+import { intro, outro, select, text, spinner, isCancel, cancel, password } from '@clack/prompts';
+import { bgCyan, black, red, green, yellow } from 'kleur/colors';
 import { Command } from 'commander';
 import { Langvision, Langtune } from './index';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
-// Initialize clients
-const vision = new Langvision();
-const tune = new Langtune();
+// Configuration
+const CONFIG_DIR = path.join(os.homedir(), '.langtrain');
+const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
+
+function getConfig() {
+    if (!fs.existsSync(CONFIG_FILE)) return {};
+    try {
+        return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+    } catch {
+        return {};
+    }
+}
+
+function saveConfig(config: any) {
+    if (!fs.existsSync(CONFIG_DIR)) {
+        fs.mkdirSync(CONFIG_DIR, { recursive: true });
+    }
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
+}
+
+// Initialize clients with config
+const config = getConfig();
+const vision = new Langvision({ apiKey: config.apiKey });
+const tune = new Langtune({ apiKey: config.apiKey });
 
 async function main() {
     const program = new Command();
@@ -14,11 +38,37 @@ async function main() {
     program
         .name('langtrain')
         .description('Langtrain CLI for AI Model Fine-tuning and Generation')
-        .version('0.1.5');
+        .version('0.1.7');
 
     program.action(async () => {
         console.clear();
         intro(`${bgCyan(black(' langtrain '))}`);
+
+        // Check auth
+        const config = getConfig();
+        if (!config.apiKey) {
+            intro(yellow('Authentication required'));
+            const apiKey = await password({
+                message: 'Enter your Langtrain API Key:',
+                validate(value) {
+                    if (!value || value.length === 0) return 'API Key is required';
+                },
+            });
+
+            if (isCancel(apiKey)) {
+                cancel('Operation cancelled');
+                process.exit(0);
+            }
+
+            saveConfig({ ...config, apiKey });
+            intro(green('Successfully logged in!'));
+            // Re-init clients with new key
+            const newConfig = getConfig();
+            // vision.apiKey = newConfig.apiKey; // Ideally settable, but for now restart works or we rely on re-init logic if we moved it inside.
+            // For simplicity in this script, we just proceed. The next run will pick it up, 
+            // OR we can make clients mutable. 
+            // Better: just re-instantiate here if needed, or pass config to handlers.
+        }
 
         const operation = await select({
             message: 'Select an operation:',
@@ -27,6 +77,7 @@ async function main() {
                 { value: 'tune-generate', label: '📝 Generate Text (Langtune)' },
                 { value: 'vision-finetune', label: '👁️ Fine-tune Vision Model (Langvision)' },
                 { value: 'vision-generate', label: '🖼️ Generate Vision Response (Langvision)' },
+                { value: 'login', label: '🔑 Update API Key' },
                 { value: 'exit', label: '🚪 Exit' }
             ],
         });
@@ -37,14 +88,21 @@ async function main() {
         }
 
         try {
-            if (operation === 'tune-finetune') {
-                await handleTuneFinetune();
+            // Re-read config in case it was just set
+            const currentConfig = getConfig();
+            const currentVision = new Langvision({ apiKey: currentConfig.apiKey });
+            const currentTune = new Langtune({ apiKey: currentConfig.apiKey });
+
+            if (operation === 'login') {
+                await handleLogin();
+            } else if (operation === 'tune-finetune') {
+                await handleTuneFinetune(currentTune);
             } else if (operation === 'tune-generate') {
-                await handleTuneGenerate();
+                await handleTuneGenerate(currentTune);
             } else if (operation === 'vision-finetune') {
-                await handleVisionFinetune();
+                await handleVisionFinetune(currentVision);
             } else if (operation === 'vision-generate') {
-                await handleVisionGenerate();
+                await handleVisionGenerate(currentVision);
             }
         } catch (error: any) {
             outro(red(`Error: ${error.message}`));
@@ -57,8 +115,24 @@ async function main() {
     program.parse(process.argv);
 }
 
+async function handleLogin() {
+    const apiKey = await password({
+        message: 'Enter your new Langtrain API Key:',
+        validate(value) {
+            if (!value || value.length === 0) return 'API Key is required';
+        },
+    });
+
+    if (isCancel(apiKey)) cancel('Operation cancelled');
+
+    const config = getConfig();
+    saveConfig({ ...config, apiKey });
+    // Update global clients? No, we re-instantiated in main loop.
+}
+
+
 // Handler for Langtune Fine-tuning
-async function handleTuneFinetune() {
+async function handleTuneFinetune(tune: Langtune) {
     const model = await text({
         message: 'Enter base model (e.g., gpt-3.5-turbo):',
         placeholder: 'gpt-3.5-turbo',
@@ -88,7 +162,7 @@ async function handleTuneFinetune() {
     s.start('Starting fine-tuning job...');
 
     try {
-        // Check if FinetuneConfig types match what's needed.
+        // Check if FinetuneConfig types match what's needed. 
         // Casting to any to bypass strict type checking for this demo or ensure types are imported correctly.
         // In a real scenario, we'd construct the full config object.
         const config: any = {
@@ -111,7 +185,7 @@ async function handleTuneFinetune() {
 }
 
 // Handler for Langtune Generation
-async function handleTuneGenerate() {
+async function handleTuneGenerate(tune: Langtune) {
     const model = await text({
         message: 'Enter model path:',
         placeholder: './output/model',
@@ -140,7 +214,7 @@ async function handleTuneGenerate() {
 }
 
 // Handler for Langvision Fine-tuning
-async function handleVisionFinetune() {
+async function handleVisionFinetune(vision: Langvision) {
     const model = await text({
         message: 'Enter base vision model:',
         placeholder: 'llava-v1.5-7b',
@@ -182,7 +256,7 @@ async function handleVisionFinetune() {
 }
 
 // Handler for Langvision Generation
-async function handleVisionGenerate() {
+async function handleVisionGenerate(vision: Langvision) {
     const model = await text({
         message: 'Enter model path:',
         placeholder: './vision-output/model',
