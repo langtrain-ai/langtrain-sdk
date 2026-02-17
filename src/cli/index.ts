@@ -30,16 +30,37 @@ export async function main() {
         showBanner(version);
 
         // 1. Auth & Plan Check Force
-        const apiKey = await ensureAuth();
-        const plan = await getSubscription(apiKey);
+        // 1. Auth & Plan Check (Lazy)
+        // 0. First Run Check
+        const isFirstRun = process.argv.includes('--first-run');
+        if (isFirstRun) {
+            // Check if interactive
+            if (process.stdin.isTTY) {
+                intro('Welcome to Langtrain! Let\'s get you set up.');
+                await handleLogin();
+                // Reload config after login
+            } else {
+                console.log('Langtrain installed! Run "npx langtrain login" to authenticate.');
+                process.exit(0);
+            }
+        }
+
+        // 1. Auth & Plan Check (Lazy)
+        let config = getConfig();
+        let apiKey = config.apiKey || '';
+        let plan: SubscriptionInfo | null = null;
+
+        // Try to fetch plan if key exists? 
+        if (apiKey) {
+            try { plan = await getSubscription(apiKey); } catch { }
+        }
 
         // 2. Global Client Init
-        const config = getConfig();
-        const clients = {
-            vision: new Langvision({ apiKey: config.apiKey! }),
-            tune: new Langtune({ apiKey: config.apiKey! }),
-            agent: new AgentClient({ apiKey: config.apiKey!, baseUrl: config.baseUrl }),
-            model: new ModelClient({ apiKey: config.apiKey!, baseUrl: config.baseUrl })
+        let clients = {
+            vision: new Langvision({ apiKey }),
+            tune: new Langtune({ apiKey }),
+            agent: new AgentClient({ apiKey, baseUrl: config.baseUrl }),
+            model: new ModelClient({ apiKey, baseUrl: config.baseUrl })
         };
 
         // 3. Navigation Loop
@@ -53,7 +74,7 @@ export async function main() {
 
             const operation = await select({
                 message: getMessageForState(currentState),
-                options: getMenu(currentState, plan)
+                options: getMenu(currentState, plan, !!apiKey)
             });
 
             if (isCancel(operation)) {
@@ -85,7 +106,18 @@ export async function main() {
             // Action Logic
             try {
                 switch (op) {
-                    case 'login': await handleLogin(); break;
+                    case 'login':
+                        await handleLogin();
+                        config = getConfig();
+                        apiKey = config.apiKey || '';
+                        clients = {
+                            vision: new Langvision({ apiKey }),
+                            tune: new Langtune({ apiKey }),
+                            agent: new AgentClient({ apiKey, baseUrl: config.baseUrl }),
+                            model: new ModelClient({ apiKey, baseUrl: config.baseUrl })
+                        };
+                        try { plan = await getSubscription(apiKey); } catch { }
+                        break;
                     case 'status': await handleSubscriptionStatus(); break;
                     case 'tune-finetune': await handleTuneFinetune(clients.tune, clients.model); break;
                     case 'tune-generate': await handleTuneGenerate(clients.tune); break;

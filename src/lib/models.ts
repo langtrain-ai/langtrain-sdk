@@ -1,11 +1,26 @@
 import axios, { AxiosInstance } from 'axios';
 
+export interface Permission {
+    id: string;
+    object: string;
+    created: number;
+    allow_create_engine: boolean;
+    allow_sampling: boolean;
+    allow_logprobs: boolean;
+    allow_search_indices: boolean;
+    allow_view: boolean;
+    allow_fine_tuning: boolean;
+    organization: string;
+    group: any;
+    is_blocking: boolean;
+}
+
 export interface Model {
     id: string;
     object: string; // 'model'
     created: number;
     owned_by: string;
-    permission: any[];
+    permission: Permission[];
     root: string;
     parent: string | null;
     task?: 'text' | 'vision' | 'agent';

@@ -8,18 +8,32 @@ export interface MenuOption {
 
 export type MenuState = 'main' | 'agents' | 'text' | 'vision' | 'settings';
 
-export function getMenu(state: MenuState, plan: SubscriptionInfo | null): MenuOption[] {
+export function getMenu(state: MenuState, plan: SubscriptionInfo | null, isAuthenticated: boolean): MenuOption[] {
     const isPro = plan?.plan === 'pro' || plan?.plan === 'enterprise';
+
+    // If not authenticated, force login or limited menu?
+    // User requested "lazy auth", so we should show menu but maybe highlight login or allow navigation and prompt later.
+    // Let's add a visual cue.
 
     switch (state) {
         case 'main':
-            return [
+            const menu: MenuOption[] = [
                 { value: 'nav-agents', label: 'Agents', hint: 'Manage & Chat with AI Agents' },
                 { value: 'nav-text', label: 'Langtune (Text)', hint: 'Fine-tuning & Generation' },
                 { value: 'nav-vision', label: 'Langvision (Vision)', hint: 'Vision Analysis & Tuning' },
-                { value: 'nav-settings', label: 'Settings', hint: 'Subscription & Auth' },
-                { value: 'exit', label: 'Exit' }
+                { value: 'nav-settings', label: 'Settings', hint: 'Subscription & Auth' }
             ];
+
+            if (!isAuthenticated) {
+                // menu.unshift({ value: 'login', label: 'Login to Langtrain', hint: 'Required for most features' });
+                // Actually, let's make Login the first option if not authenticated
+                // But keep the others so user can see what's available (and get prompted)
+                menu.unshift({ value: 'login', label: 'Login to Langtrain', hint: 'Required for most features' });
+            }
+
+            // Always add Exit
+            menu.push({ value: 'exit', label: 'Exit' });
+            return menu;
 
         case 'agents':
             return [
@@ -45,8 +59,8 @@ export function getMenu(state: MenuState, plan: SubscriptionInfo | null): MenuOp
 
         case 'settings':
             return [
-                { value: 'status', label: 'Check Subscription Status' },
-                { value: 'login', label: 'Update API Key' },
+                { value: 'status', label: isAuthenticated ? `Subscription Status (${plan?.plan || 'Free'})` : 'Check Status (Login required)' },
+                { value: 'login', label: isAuthenticated ? 'Update API Key' : 'Login' },
                 { value: 'back', label: '← Back to Main Menu' }
             ];
 

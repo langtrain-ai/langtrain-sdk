@@ -6,7 +6,7 @@ export interface Agent {
     name: string;
     description?: string;
     model_id?: string;
-    config: any;
+    config: Record<string, unknown>;
     is_active: boolean;
     created_at: string;
     updated_at: string;
@@ -16,7 +16,7 @@ export interface AgentRun {
     id: string;
     conversation_id: string;
     success: boolean;
-    output?: any;
+    output?: unknown;
     error?: string;
     latency_ms: number;
     tokens_used: number;

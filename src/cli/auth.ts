@@ -15,21 +15,38 @@ export async function ensureAuth(): Promise<string> {
 }
 
 export async function handleLogin() {
-    const apiKey = await password({
-        message: 'Enter your Langtrain API Key:',
-        validate(value) {
-            if (!value || value.length === 0) return 'API Key is required';
-        },
-    });
+    while (true) {
+        const apiKey = await password({
+            message: 'Enter your Langtrain API Key:',
+            validate(value) {
+                if (!value || value.length === 0) return 'API Key is required';
+            },
+        });
 
-    if (isCancel(apiKey)) {
-        cancel('Operation cancelled');
-        process.exit(0);
+        if (isCancel(apiKey)) {
+            cancel('Operation cancelled');
+            process.exit(0);
+        }
+
+        const s = spinner();
+        s.start('Verifying API Key...');
+
+        // Verify key immediately
+        try {
+            const client = new SubscriptionClient({ apiKey: apiKey as string });
+            const info = await client.getStatus();
+
+            s.stop(green(`Authenticated as ${info.plan === 'pro' ? 'PRO' : info.plan.toUpperCase()}`));
+
+            const config = getConfig();
+            saveConfig({ ...config, apiKey: apiKey as string });
+            // intro(green('API Key saved successfully!')); // success message above is enough
+            return; // Exit loop on success
+        } catch (e: any) {
+            s.stop(red('Invalid API Key. Please try again.'));
+            // Loop continues
+        }
     }
-
-    const config = getConfig();
-    saveConfig({ ...config, apiKey: apiKey as string });
-    intro(green('API Key saved successfully!'));
 }
 
 export async function getSubscription(apiKey: string): Promise<SubscriptionInfo | null> {
