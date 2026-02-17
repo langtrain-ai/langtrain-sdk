@@ -312,4 +312,11 @@ async function handleVisionGenerate(vision: Langvision) {
         const response = await vision.generate(model as string, { prompt: prompt as string });
         s.stop('Generation complete');
         intro('Response:');
-        main().catch(console.error);
+        console.log(gradient.pastel(response));
+    } catch (e: any) {
+        s.stop(red('Generation failed.'));
+        throw e;
+    }
+}
+
+main().catch(console.error);
