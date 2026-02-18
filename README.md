@@ -121,8 +121,6 @@ const client = new Langvision({
 ## Community & Support
 
 - **[GitHub Discussions](https://github.com/langtrain-ai/langtrain-sdk/discussions)**: Ask questions and share ideas.
-- **[Twitter](https://twitter.com/langtrain_ai)**: Follow for updates and announcements.
-- **[Email](mailto:support@langtrain.ai)**: Contact us for enterprise support.
 
 ## Documentation
 
