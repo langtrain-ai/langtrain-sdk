@@ -21,7 +21,7 @@
   <p><strong>Langtrain CLI</strong> is a unified AI engineering platform that runs locally on your computer and connects to the Langtrain Cloud.</p>
 
   <p align="center">
-    <img src="./assets/cli-demo.png" alt="Langtrain CLI Screenshot" width="800" style="border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);" />
+    <img src="./assets/cli-demo.png " alt="Langtrain CLI Screenshot" width="800" style="border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);" />
   </p>
 
   <p>
