@@ -146,7 +146,7 @@ export async function handleAgentList(client: AgentClient) {
     await handleAgentRun(client, agentId as string, agents.find(a => a.id === agentId)?.name || 'Agent');
 }
 
-async function handleAgentRun(client: AgentClient, agentId: string, agentName: string) {
+export async function handleAgentRun(client: AgentClient, agentId: string, agentName: string) {
     intro(bgCyan(black(` Chatting with ${agentName} `)));
     console.log(gray('Type "exit" to quit conversation.'));
 
@@ -168,8 +168,8 @@ async function handleAgentRun(client: AgentClient, agentId: string, agentName: s
             const result = await client.execute(agentId, { prompt: input }, [], conversationId);
             s.stop();
 
-            if (result.output && result.output.response) {
-                console.log(gradient.pastel(`Agent: ${result.output.response}`));
+            if ((result.output as any)?.response) {
+                console.log(gradient.pastel(`Agent: ${(result.output as any).response}`));
             } else {
                 console.log(gradient.pastel(`Agent: ${JSON.stringify(result.output)}`));
             }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import path from 'path';
-import { bgCyan, black, red, select, isCancel, outro, intro, gray } from './ui'; // Ensure clear is exported if added, otherwise use console.clear()
+import { select, isCancel, outro, intro, colors } from './ui'; // Ensure clear is exported if added, otherwise use console.clear()
 import { showBanner } from './ui';
 import { ensureAuth, handleLogin, getSubscription } from './auth';
 import { getMenu, MenuState } from './menu';
@@ -9,12 +9,17 @@ import { getConfig } from './config';
 
 // Handlers
 import { handleSubscriptionStatus } from './handlers/subscription';
-import { handleTuneFinetune, handleTuneGenerate } from './handlers/tune';
+import { handleTuneFinetune, handleTuneGenerate, handleTuneList } from './handlers/tune';
 import { handleVisionFinetune, handleVisionGenerate } from './handlers/vision';
 import { handleAgentCreate, handleAgentDelete, handleAgentList } from './handlers/agent';
+import { handleInit } from './handlers/init';
+import { handleDoctor } from './handlers/doctor';
+import { handleDataUpload } from './handlers/data';
+import { handleDeploy } from './handlers/deploy';
+import { handleDev } from './handlers/dev';
 
 // Clients
-import { SubscriptionInfo, Langvision, Langtune, AgentClient, ModelClient } from '../index';
+import { SubscriptionInfo, Langvision, Langtune, AgentClient, ModelClient, FileClient, TrainingClient } from '../index';
 import packageJson from '../../package.json';
 
 export async function main() {
@@ -25,6 +30,29 @@ export async function main() {
         .name('langtrain')
         .description(packageJson.description || 'Langtrain CLI for AI Model Fine-tuning and Generation')
         .version(version);
+
+    // Register standalone commands
+    program.command('init')
+        .description('Initialize a new Langtrain project')
+        .action(handleInit);
+
+    program.command('deploy')
+        .description('Deploy configuration to Langtrain Cloud')
+        .action(async () => {
+            const config = getConfig();
+            const apiKey = config.apiKey || '';
+            const client = new AgentClient({ apiKey, baseUrl: config.baseUrl });
+            await handleDeploy(client);
+        });
+
+    program.command('dev')
+        .description('Start local development server (Watch Mode)')
+        .action(async () => {
+            const config = getConfig();
+            const apiKey = config.apiKey || '';
+            const client = new AgentClient({ apiKey, baseUrl: config.baseUrl });
+            await handleDev(client);
+        });
 
     program.action(async () => {
         showBanner(version);
@@ -60,7 +88,8 @@ export async function main() {
             vision: new Langvision({ apiKey }),
             tune: new Langtune({ apiKey }),
             agent: new AgentClient({ apiKey, baseUrl: config.baseUrl }),
-            model: new ModelClient({ apiKey, baseUrl: config.baseUrl })
+            model: new ModelClient({ apiKey, baseUrl: config.baseUrl }),
+            train: new TrainingClient({ apiKey, baseUrl: config.baseUrl })
         };
 
         // 3. Navigation Loop
@@ -114,25 +143,32 @@ export async function main() {
                             vision: new Langvision({ apiKey }),
                             tune: new Langtune({ apiKey }),
                             agent: new AgentClient({ apiKey, baseUrl: config.baseUrl }),
-                            model: new ModelClient({ apiKey, baseUrl: config.baseUrl })
+                            model: new ModelClient({ apiKey, baseUrl: config.baseUrl }),
+                            train: new TrainingClient({ apiKey, baseUrl: config.baseUrl })
                         };
                         try { plan = await getSubscription(apiKey); } catch { }
                         break;
                     case 'status': await handleSubscriptionStatus(); break;
+                    case 'init': await handleInit(); break;
+                    case 'deploy': await handleDeploy(clients.agent); break;
+                    case 'dev': await handleDev(clients.agent); break;
+                    case 'doctor': await handleDoctor(); break;
                     case 'tune-finetune': await handleTuneFinetune(clients.tune, clients.model); break;
+                    case 'tune-list': await handleTuneList(clients.train); break;
                     case 'tune-generate': await handleTuneGenerate(clients.tune); break;
                     case 'vision-finetune': await handleVisionFinetune(clients.vision, clients.model); break;
                     case 'vision-generate': await handleVisionGenerate(clients.vision); break;
                     case 'agent-list': await handleAgentList(clients.agent); break;
                     case 'agent-create': await handleAgentCreate(clients.agent, clients.model); break;
                     case 'agent-delete': await handleAgentDelete(clients.agent); break;
+                    case 'data-upload': await handleDataUpload(new FileClient({ apiKey })); break;
                 }
 
                 // After action, where do we go? 
                 // Stay in current state (sub-menu) is usually preferred.
 
             } catch (error: any) {
-                outro(red(`Error: ${error.message}`));
+                outro(colors.red(`Error: ${error.message}`));
             }
         }
     });

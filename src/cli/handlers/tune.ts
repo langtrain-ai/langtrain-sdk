@@ -1,4 +1,4 @@
-import { text, select, confirm, isCancel, cancel, spinner, intro, red, green, yellow, bgCyan, black, gradient } from '../ui';
+import { text, select, confirm, isCancel, cancel, spinner, intro, red, green, yellow, bgCyan, black, gradient, gray } from '../ui';
 import { getConfig } from '../config';
 import { Langtune, ModelClient, SubscriptionClient, FileClient, TrainingClient } from '../../index';
 
@@ -151,5 +151,107 @@ export async function handleTuneGenerate(tune: Langtune) {
     } catch (e: any) {
         s.stop(red('Generation failed.'));
         throw e;
+    }
+}
+
+export async function handleTuneList(trainingClient: TrainingClient) {
+    const s = spinner();
+    s.start('Fetching fine-tuning jobs...');
+
+    // We need workspace ID, usually from config or first agent?
+    // For now, let's just ask or list from all available if API supports it (it requires workspace_id)
+    // Let's assume user knows it or we can find it.
+    // Simplified: Just ask for Workspace ID if not in config (we don't save it yet)
+    // BETTER: Get it from an existing agent or config.
+    const config = getConfig();
+    let workspaceId = config.workspace_id;
+
+    if (!workspaceId) {
+        s.stop(yellow('Workspace ID required to list jobs.'));
+        workspaceId = await text({ message: 'Enter Workspace ID:' });
+        if (isCancel(workspaceId)) return;
+    }
+
+    try {
+        const jobs = await trainingClient.listJobs(workspaceId as string);
+        s.stop(`Found ${jobs.data.length} jobs`);
+
+        if (jobs.data.length === 0) {
+            console.log(yellow('No jobs found.'));
+            return;
+        }
+
+        const selectedJob = await select({
+            message: 'Select a job to view details:',
+            options: jobs.data.map(j => ({
+                value: j.id,
+                label: `${j.name || j.id} (${j.status})`,
+                hint: `Created: ${new Date(j.created_at).toLocaleDateString()}`
+            }))
+        });
+
+        if (isCancel(selectedJob)) return;
+
+        await handleTuneStatus(trainingClient, selectedJob as string);
+
+    } catch (e: any) {
+        s.stop(red(`Failed to list jobs: ${e.message}`));
+    }
+}
+
+export async function handleTuneStatus(trainingClient: TrainingClient, jobId?: string) {
+    let id = jobId;
+    if (!id) {
+        id = await text({ message: 'Enter Job ID:' }) as string;
+        if (isCancel(id)) return;
+    }
+
+    const s = spinner();
+    s.start(`Fetching status for ${id}...`);
+
+    try {
+        const job = await trainingClient.getJob(id);
+        s.stop(`Job Status: ${job.status.toUpperCase()}`);
+
+        console.log(gray('------------------------------------------------'));
+        console.log(`${bgCyan(black(' Job Details '))}`);
+        console.log(`ID:        ${job.id}`);
+        console.log(`Name:      ${job.name}`);
+        console.log(`Status:    ${job.status === 'succeeded' ? green(job.status) : job.status}`);
+        console.log(`Model:     ${job.base_model}`);
+        console.log(`Progress:  ${job.progress || 0}%`);
+        if (job.error_message) console.log(red(`Error:     ${job.error_message}`));
+        console.log(gray('------------------------------------------------'));
+
+        if (job.status === 'running' || job.status === 'queued') {
+            const action = await select({
+                message: 'Action:',
+                options: [
+                    { value: 'refresh', label: 'Refresh Status' },
+                    { value: 'cancel', label: 'Cancel Job' },
+                    { value: 'back', label: 'Back' }
+                ]
+            });
+
+            if (action === 'refresh') await handleTuneStatus(trainingClient, id);
+            if (action === 'cancel') await handleTuneCancel(trainingClient, id);
+        }
+
+    } catch (e: any) {
+        s.stop(red(`Failed to get job status: ${e.message}`));
+    }
+}
+
+export async function handleTuneCancel(trainingClient: TrainingClient, jobId: string) {
+    const confirmCancel = await confirm({ message: 'Are you sure you want to cancel this job?' });
+    if (!confirmCancel || isCancel(confirmCancel)) return;
+
+    const s = spinner();
+    s.start('Canceling job...');
+    try {
+        await trainingClient.cancelJob(jobId);
+        s.stop(green('Job canceled successfully.'));
+    } catch (e: any) {
+        s.stop(red(`Failed to cancel job: ${e.message}`));
     }
 }

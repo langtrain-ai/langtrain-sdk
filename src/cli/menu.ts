@@ -21,6 +21,10 @@ export function getMenu(state: MenuState, plan: SubscriptionInfo | null, isAuthe
                 { value: 'nav-agents', label: 'Agents', hint: 'Manage & Chat with AI Agents' },
                 { value: 'nav-text', label: 'Langtune (Text)', hint: 'Fine-tuning & Generation' },
                 { value: 'nav-vision', label: 'Langvision (Vision)', hint: 'Vision Analysis & Tuning' },
+                { value: 'init', label: 'Initialize Project', hint: 'Scaffold new Langtrain app' },
+                { value: 'deploy', label: 'Deploy', hint: 'Push config to Cloud' },
+                { value: 'dev', label: 'Start Dev Server', hint: 'Watch mode' },
+                { value: 'doctor', label: 'Doctor', hint: 'Check environment health' },
                 { value: 'nav-settings', label: 'Settings', hint: 'Subscription & Auth' }
             ];
 
@@ -37,7 +41,7 @@ export function getMenu(state: MenuState, plan: SubscriptionInfo | null, isAuthe
 
         case 'agents':
             return [
-                { value: 'agent-list', label: 'List & Run Agents', hint: 'View active agents' },
+                { value: 'agent-list', label: 'List & Run Agents', hint: 'Chat with active agents' },
                 { value: 'agent-create', label: 'Create New Agent', hint: 'Deploy a new agent' },
                 { value: 'agent-delete', label: 'Delete Agent', hint: 'Remove an agent' },
                 { value: 'back', label: '← Back to Main Menu' }
@@ -46,7 +50,9 @@ export function getMenu(state: MenuState, plan: SubscriptionInfo | null, isAuthe
         case 'text':
             return [
                 { value: 'tune-finetune', label: 'Fine-tune Text Model', hint: 'Create custom LLM' },
+                { value: 'tune-list', label: 'List Jobs', hint: 'Check training status' },
                 { value: 'tune-generate', label: 'Generate Text', hint: 'Test your models' },
+                { value: 'data-upload', label: 'Upload Dataset', hint: 'Upload JSONL for training' },
                 { value: 'back', label: '← Back to Main Menu' }
             ];
 

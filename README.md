@@ -38,7 +38,7 @@ npm install -g langtrain
 Then run `langtrain` to start the interactive AI engineering studio:
 
 ```shell
-langtrain
+lt
 ```
 
 <details>
@@ -52,11 +52,11 @@ sudo npm install -g langtrain
 
 ### Using Langtrain with your Cloud Plan
 
-Run `langtrain login` and enter your API Key from the dashboard to authenticate. We recommend signing into your Langtrain account to use **Cloud Finetuning**, **Agent Persistence**, and **Model Hosting** as part of your Pro or Enterprise plan. [Learn more about Langtrain Plans](https://langtrain.xyz/pricing).
+Run `lt login` and enter your API Key from the dashboard to authenticate. We recommend signing into your Langtrain account to use **Cloud Finetuning**, **Agent Persistence**, and **Model Hosting** as part of your Pro or Enterprise plan. [Learn more about Langtrain Plans](https://langtrain.xyz/pricing).
 
 Check your subscription status and limits:
 ```shell
-langtrain status
+lt status
 ```
 *Free plans allow local fine-tuning. Upgrade to Pro for cloud-based GPU training.*
 
@@ -102,7 +102,7 @@ async function analyzeAndTune() {
 
 ## Configuration
 
-The SDK and CLI can be configured using environment variables `(dotenv supported)` or via `langtrain login`.
+The SDK and CLI can be configured using environment variables `(dotenv supported)` or via `lt login`.
 
 | Variable | Description |
 | :--- | :--- |

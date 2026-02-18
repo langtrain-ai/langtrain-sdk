@@ -16,6 +16,7 @@ export async function ensureAuth(): Promise<string> {
 
 export async function handleLogin() {
     while (true) {
+        console.log(gray('\nGet your API Key at: https://langtrain.xyz/settings/keys\n'));
         const apiKey = await password({
             message: 'Enter your Langtrain API Key:',
             validate(value) {

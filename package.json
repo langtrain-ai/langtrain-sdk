@@ -6,7 +6,8 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "bin": {
-    "langtrain": "./dist/cli.js"
+    "langtrain": "./dist/cli.js",
+    "lt": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsup",

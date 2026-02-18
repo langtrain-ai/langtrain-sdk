@@ -1,10 +1,9 @@
-import { text, select, confirm, password, isCancel, cancel } from '@clack/prompts';
-import { bgCyan, black, red, green, yellow, gray, cyan, bold } from 'kleur/colors';
-
-// Gradient removed for cleaner look, or keep if user likes it but wants no emojis?
-// User said "remove emojis", didn't explicitly say "remove colors/gradients", but "clean UI" usually implies less noise.
-// I will keep the banner gradient as it is a brand element, but remove emojis from intro/outro.
+import { text, select, confirm, password, isCancel, cancel, note } from '@clack/prompts';
+import { bgCyan, black, red, green, yellow, gray, cyan, bold, dim, blue } from 'kleur/colors';
 import gradient from 'gradient-string';
+
+// Re-export specific prompts to keep imports clean in other files
+export { text, select, confirm, password, isCancel, cancel, note };
 
 export function showBanner(version: string) {
     console.clear();
@@ -47,4 +46,22 @@ export function showSuccess(message: string) {
     console.log(green(`✔ ${message}`));
 }
 
-export { text, select, confirm, password, isCancel, cancel, bgCyan, black, red, green, yellow, gray, cyan, bold, gradient };
+export function showWarning(message: string) {
+    console.log(yellow(`⚠ Warning: ${message}`));
+}
+
+export function showInfo(message: string) {
+    console.log(blue(`ℹ ${message}`));
+}
+
+export function showDim(message: string) {
+    console.log(dim(message));
+}
+
+// Re-export for backward compatibility
+export { bgCyan, black, red, green, yellow, gray, cyan, bold, dim, blue, gradient };
+
+export const colors = {
+    bgCyan, black, red, green, yellow, gray, cyan, bold, dim, blue
+};
+
