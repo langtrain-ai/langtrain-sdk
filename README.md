@@ -28,7 +28,7 @@
 
 ---
 
-## 🚀 Quickstart (CLI)
+## Quickstart (CLI)
 
 Install globally with npm:
 
@@ -63,7 +63,7 @@ langtrain status
 
 ---
 
-## 📦 SDK Usage
+## SDK Usage
 
 You can also use `langtrain` as a library in your Node.js applications to build intelligent agents and workflows.
 
@@ -93,15 +93,15 @@ async function analyzeAndTune() {
 }
 ```
 
-## ✨ Features
+## Features
 
-- **🤖 AI Agents**: Create, manage, and chat with custom AI agents hosted on Langtrain Server.
-- **🧠 Langtune**: Fine-tune LLMs (Llama 3, Mistral) locally or on the cloud.
-- **👁️ Langvision**: Optimize and fine-tune multimodal vision models.
-- **☁️ Data Persistence**: Automatically sync datasets and training jobs with your workspace.
-- **📊 Subscription Management**: Verify plan limits and feature access programmatically.
+- **AI Agents**: Create, manage, and chat with custom AI agents hosted on Langtrain Server.
+- **Langtune**: Fine-tune LLMs (Llama 3, Mistral) locally or on the cloud.
+- **Langvision**: Optimize and fine-tune multimodal vision models.
+- **Data Persistence**: Automatically sync datasets and training jobs with your workspace.
+- **Subscription Management**: Verify plan limits and feature access programmatically.
 
-## ⚙️ Configuration
+## Configuration
 
 The SDK and CLI can be configured using environment variables `(dotenv supported)` or via `langtrain login`.
 
@@ -118,19 +118,19 @@ const client = new Langvision({
 });
 ```
 
-## 🤝 Community & Support
+## Community & Support
 
 - **[GitHub Discussions](https://github.com/langtrain-ai/langtrain-sdk/discussions)**: Ask questions and share ideas.
 - **[Twitter](https://twitter.com/langtrain_ai)**: Follow for updates and announcements.
 - **[Email](mailto:support@langtrain.ai)**: Contact us for enterprise support.
 
-## 📚 Documentation
+## Documentation
 
 - [**Langtrain Documentation**](https://docs.langtrain.ai)
 - [**SDK Reference**](https://docs.langtrain.ai/sdk)
 - [**Contributing**](./CONTRIBUTING.md)
 
-## 📄 License
+## License
 
 This repository is licensed under the [MIT License](LICENSE).
 copyright © [Langtrain](https://langtrain.xyz)
