@@ -1,5 +1,5 @@
 import { text, select, confirm, password, isCancel, cancel, note } from '@clack/prompts';
-import { bgCyan, black, red, green, yellow, gray, cyan, bold, dim, blue } from 'kleur/colors';
+import { bgMagenta, black, red, green, yellow, gray, cyan, bold, dim, blue, magenta, white } from 'kleur/colors';
 import gradient from 'gradient-string';
 
 // Re-export specific prompts to keep imports clean in other files
@@ -15,12 +15,15 @@ export function showBanner(version: string) {
     ███████╗██║  ██║██║ ╚████║╚██████╔╝  ██║   ██║  ██║██║  ██║██║██║ ╚████║
     ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝
     `;
-    console.log(gradient(['#00DC82', '#36E4DA', '#0047E1'])(banner));
-    console.log(`${bgCyan(black(` Langtrain SDK v${version} `))}\n`);
+    // Brand Gradient: Purple to Pink to Blue (Light Luxury)
+    console.log(gradient(['#A855F7', '#EC4899', '#3B82F6'])(banner));
+
+    // Elegant Badge: Black text on Magenta background
+    console.log(`${bgMagenta(black(` Langtrain SDK v${version} `))}\n`);
 }
 
 export function intro(message: string) {
-    console.log(cyan(`◆ ${message}`));
+    console.log(magenta(`◆ ${message}`));
 }
 
 export function outro(message: string) {
@@ -29,12 +32,12 @@ export function outro(message: string) {
 
 export function spinner() {
     return {
-        start: (msg: string) => process.stdout.write(`${cyan('●')} ${msg}\r`),
+        start: (msg: string) => process.stdout.write(`${magenta('●')} ${msg}\r`),
         stop: (msg?: string) => {
             if (msg) console.log(`${green('✔')} ${msg}`);
             else console.log(''); // Newline
         },
-        message: (msg: string) => process.stdout.write(`${cyan('●')} ${msg}\r`)
+        message: (msg: string) => process.stdout.write(`${magenta('●')} ${msg}\r`)
     };
 }
 
@@ -59,9 +62,9 @@ export function showDim(message: string) {
 }
 
 // Re-export for backward compatibility
-export { bgCyan, black, red, green, yellow, gray, cyan, bold, dim, blue, gradient };
+export { bgMagenta, black, red, green, yellow, gray, cyan, bold, dim, blue, gradient, magenta, white };
 
 export const colors = {
-    bgCyan, black, red, green, yellow, gray, cyan, bold, dim, blue
+    bgMagenta, black, red, green, yellow, gray, cyan, bold, dim, blue, magenta, white
 };
 
