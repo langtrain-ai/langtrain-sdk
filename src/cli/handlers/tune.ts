@@ -1,4 +1,4 @@
-import { text, select, confirm, isCancel, cancel, spinner, intro, red, green, yellow, bgCyan, black, gradient, gray } from '../ui';
+import { text, select, confirm, isCancel, cancel, spinner, intro, red, green, yellow, bgMagenta, black, gradient, gray } from '../ui';
 import { getConfig } from '../config';
 import { Langtune, ModelClient, SubscriptionClient, FileClient, TrainingClient } from '../../index';
 
@@ -73,7 +73,7 @@ export async function handleTuneFinetune(tune: Langtune, modelClient: ModelClien
                 s.stop(red('Feature "cloud_finetuning" is not available on your plan.'));
                 const upgrade = await confirm({ message: 'Upgrade to Pro for cloud tracking?' });
                 if (upgrade && !isCancel(upgrade)) {
-                    console.log(bgCyan(black(' Visit https://langtrain.ai/dashboard/billing to upgrade. ')));
+                    console.log(bgMagenta(black(' Visit https://langtrain.ai/dashboard/billing to upgrade. ')));
                 }
                 return;
             }
@@ -214,7 +214,7 @@ export async function handleTuneStatus(trainingClient: TrainingClient, jobId?: s
         s.stop(`Job Status: ${job.status.toUpperCase()}`);
 
         console.log(gray('------------------------------------------------'));
-        console.log(`${bgCyan(black(' Job Details '))}`);
+        console.log(`${bgMagenta(black(' Job Details '))}`);
         console.log(`ID:        ${job.id}`);
         console.log(`Name:      ${job.name}`);
         console.log(`Status:    ${job.status === 'succeeded' ? green(job.status) : job.status}`);

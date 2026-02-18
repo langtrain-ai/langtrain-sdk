@@ -1,4 +1,4 @@
-import { text, select, confirm, isCancel, cancel, spinner, intro, red, green, yellow, gray, bgCyan, black, gradient } from '../ui';
+import { text, select, confirm, isCancel, cancel, spinner, intro, red, green, yellow, gray, bgMagenta, black, gradient } from '../ui';
 import { AgentClient, ModelClient } from '../../index';
 
 export async function handleAgentCreate(client: AgentClient, modelClient: ModelClient) {
@@ -147,7 +147,7 @@ export async function handleAgentList(client: AgentClient) {
 }
 
 export async function handleAgentRun(client: AgentClient, agentId: string, agentName: string, initialMessage?: string) {
-    intro(bgCyan(black(` Chatting with ${agentName} `)));
+    intro(bgMagenta(black(` Chatting with ${agentName} `)));
     console.log(gray('Type "exit" to quit conversation.'));
 
     let conversationId: string | undefined = undefined;

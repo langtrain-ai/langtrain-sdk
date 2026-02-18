@@ -1,4 +1,4 @@
-import { password, isCancel, cancel, intro, green, yellow, red, bgCyan, black, spinner, gray } from './ui';
+import { password, isCancel, cancel, intro, green, yellow, red, bgMagenta, black, spinner, gray } from './ui';
 import { getConfig, saveConfig } from './config';
 import { SubscriptionClient, SubscriptionInfo } from '../index';
 
@@ -58,7 +58,7 @@ export async function getSubscription(apiKey: string): Promise<SubscriptionInfo 
         const info = await client.getStatus();
 
         // Enhance: Show plan details immediately on auth check
-        const planLabel = info.plan === 'pro' ? bgCyan(' PRO ') : info.plan.toUpperCase();
+        const planLabel = info.plan === 'pro' ? bgMagenta(' PRO ') : info.plan.toUpperCase();
         s.stop(green(`Authenticated as ${planLabel}`));
 
         if (info.is_active === false) {

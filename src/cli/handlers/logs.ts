@@ -1,4 +1,4 @@
-import { intro, spinner, red, gray, yellow, bgCyan, black, green } from '../ui';
+import { intro, spinner, red, gray, yellow, bgMagenta, black, green } from '../ui';
 import { AgentClient } from '../../index';
 import { select, text, isCancel } from '../ui';
 
@@ -54,7 +54,7 @@ export async function handleLogs(client: AgentClient, agentName?: string) {
         s2.stop('Logs fetched.');
 
         console.log(gray('------------------------------------------------'));
-        console.log(`${bgCyan(black(' Recent Logs '))}`);
+        console.log(`${bgMagenta(black(' Recent Logs '))}`);
         if (logs.logs && logs.logs.length > 0) {
             logs.logs.forEach(log => console.log(log));
         } else {

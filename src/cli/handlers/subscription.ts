@@ -1,4 +1,4 @@
-import { spinner, intro, red, green, gray, bgCyan } from '../ui';
+import { spinner, intro, red, green, gray, bgMagenta } from '../ui';
 import { getConfig } from '../config';
 import { SubscriptionClient } from '../../index';
 
@@ -15,7 +15,7 @@ export async function handleSubscriptionStatus() {
         const info = await client.getStatus();
         s.stop(green('Subscription Status:'));
 
-        console.log(gray('Plan: ') + (info.plan === 'pro' ? bgCyan(' PRO ') : info.plan.toUpperCase()));
+        console.log(gray('Plan: ') + (info.plan === 'pro' ? bgMagenta(' PRO ') : info.plan.toUpperCase()));
         console.log(gray('Active: ') + (info.is_active ? green('Yes') : red('No')));
         if (info.expires_at) console.log(gray('Expires: ') + new Date(info.expires_at).toLocaleDateString());
 

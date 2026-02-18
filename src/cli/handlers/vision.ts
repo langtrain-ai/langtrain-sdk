@@ -1,4 +1,4 @@
-import { text, select, confirm, isCancel, cancel, spinner, intro, red, green, yellow, bgCyan, black, gradient } from '../ui';
+import { text, select, confirm, isCancel, cancel, spinner, intro, red, green, yellow, bgMagenta, black, gradient } from '../ui';
 import { getConfig } from '../config';
 import { Langvision, ModelClient, SubscriptionClient, FileClient, TrainingClient } from '../../index';
 
@@ -74,7 +74,7 @@ export async function handleVisionFinetune(vision: Langvision, modelClient: Mode
                 s.stop(red('Feature "cloud_finetuning" is not available on your plan.'));
                 const upgrade = await confirm({ message: 'Upgrade to Pro for cloud tracking?' });
                 if (upgrade && !isCancel(upgrade)) {
-                    console.log(bgCyan(black(' Visit https://langtrain.ai/dashboard/billing to upgrade. ')));
+                    console.log(bgMagenta(black(' Visit https://langtrain.ai/dashboard/billing to upgrade. ')));
                 }
                 return;
             }
