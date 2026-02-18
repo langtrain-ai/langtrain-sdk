@@ -1,4 +1,4 @@
-import { text, select, confirm, isCancel, cancel, spinner, intro, red, green, yellow, bgMagenta, black, gradient, gray } from '../ui';
+import { text, select, confirm, isCancel, cancel, spinner, intro, red, green, yellow, bgMagenta, black, gradient, gray, createTable } from '../ui';
 import { getConfig } from '../config';
 import { Langtune, ModelClient, SubscriptionClient, FileClient, TrainingClient } from '../../index';
 
@@ -158,11 +158,6 @@ export async function handleTuneList(trainingClient: TrainingClient) {
     const s = spinner();
     s.start('Fetching fine-tuning jobs...');
 
-    // We need workspace ID, usually from config or first agent?
-    // For now, let's just ask or list from all available if API supports it (it requires workspace_id)
-    // Let's assume user knows it or we can find it.
-    // Simplified: Just ask for Workspace ID if not in config (we don't save it yet)
-    // BETTER: Get it from an existing agent or config.
     const config = getConfig();
     let workspaceId = config.workspace_id;
 
@@ -180,6 +175,21 @@ export async function handleTuneList(trainingClient: TrainingClient) {
             console.log(yellow('No jobs found.'));
             return;
         }
+
+        // Display Table
+        const table = createTable(['ID', 'Status', 'Model', 'Progress', 'Created']);
+        jobs.data.forEach(j => {
+            const statusColor = j.status === 'succeeded' ? green : (j.status === 'failed' ? red : yellow);
+            table.push([
+                j.id.substring(0, 8) + '...',
+                statusColor(j.status),
+                j.base_model,
+                (j.progress || 0) + '%',
+                new Date(j.created_at).toLocaleDateString()
+            ]);
+        });
+        console.log(table.toString());
+        console.log('');
 
         const selectedJob = await select({
             message: 'Select a job to view details:',

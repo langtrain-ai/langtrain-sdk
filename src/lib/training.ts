@@ -1,8 +1,9 @@
+import axios, { AxiosInstance } from 'axios';
+
 export class TrainingClient {
-    private client: any; // AxiosInstance
+    private client: AxiosInstance;
 
     constructor(config: { apiKey: string, baseUrl?: string }) {
-        const axios = require('axios');
         this.client = axios.create({
             baseURL: config.baseUrl || 'https://api.langtrain.ai/api/v1',
             headers: {

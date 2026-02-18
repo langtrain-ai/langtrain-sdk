@@ -1,8 +1,11 @@
+import axios, { AxiosInstance } from 'axios';
+import FormData from 'form-data';
+import fs from 'fs';
+
 export class FileClient {
-    private client: any; // AxiosInstance
+    private client: AxiosInstance;
 
     constructor(config: { apiKey: string, baseUrl?: string }) {
-        const axios = require('axios');
         this.client = axios.create({
             baseURL: config.baseUrl || 'https://api.langtrain.ai/api/v1',
             headers: {
@@ -12,9 +15,6 @@ export class FileClient {
     }
 
     async upload(file: any, workspaceId?: string, purpose: string = 'fine-tune'): Promise<FileResponse> {
-        const FormData = require('form-data');
-        const fs = require('fs');
-
         const form = new FormData();
         // Check if file is a path or buffer. Assuming path for CLI
         if (typeof file === 'string') {

@@ -68,3 +68,5 @@ export const colors = {
     bgMagenta, black, red, green, yellow, gray, cyan, bold, dim, blue, magenta, white
 };
 
+export * from './components/Table';
+

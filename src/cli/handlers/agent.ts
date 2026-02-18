@@ -1,4 +1,4 @@
-import { text, select, confirm, isCancel, cancel, spinner, intro, red, green, yellow, gray, bgMagenta, black, gradient } from '../ui';
+import { text, select, confirm, isCancel, cancel, spinner, intro, red, green, yellow, gray, bgMagenta, black, gradient, createTable } from '../ui';
 import { AgentClient, ModelClient } from '../../index';
 
 export async function handleAgentCreate(client: AgentClient, modelClient: ModelClient) {
@@ -135,6 +135,19 @@ export async function handleAgentList(client: AgentClient) {
         intro(yellow('No agents found in your workspace.'));
         return;
     }
+
+    // Display Table
+    const table = createTable(['ID', 'Name', 'Model', 'Created']);
+    agents.forEach(a => {
+        table.push([
+            a.id.substring(0, 8) + '...',
+            a.name,
+            (a.config as any)?.model || 'default',
+            new Date(a.created_at).toLocaleDateString()
+        ]);
+    });
+    console.log(table.toString());
+    console.log(''); // spacer
 
     const agentId = await select({
         message: 'Select an agent to run:',
