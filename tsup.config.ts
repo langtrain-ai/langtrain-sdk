@@ -12,5 +12,4 @@ export default defineConfig({
     clean: true,
     minify: true,
     treeshake: true,
-    noExternal: ['langvision', 'langtune'],
 });
