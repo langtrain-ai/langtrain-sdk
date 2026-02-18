@@ -45,32 +45,7 @@ Then run `langtrain` to start the interactive AI engineering studio:
 lt
 ```
 
-<br/>
 
-<div align="center">
-<pre>
-    ██╗      █████╗ ███╗   ██╗ ██████╗████████╗██████╗  █████╗ ██╗███╗   ██╗
-    ██║     ██╔══██╗████╗  ██║██╔════╝╚══██╔══╝██╔══██╗██╔══██╗██║████╗  ██║
-    ██║     ███████║██╔██╗ ██║██║  ███╗  ██║   ██████╔╝███████║██║██╔██╗ ██║
-    ██║     ██╔══██║██║╚██╗██║██║   ██║  ██║   ██╔══██╗██╔══██║██║██║╚██╗██║
-    ███████╗██║  ██║██║ ╚████║╚██████╔╝  ██║   ██║  ██║██║  ██║██║██║ ╚████║
-    ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝
-
-  <span style="background-color: #d946ef; color: black; padding: 2px 6px; font-weight: bold;"> Langtrain SDK v0.1.21 </span>
-
-  <span style="color: #d946ef">◆</span> Main Menu:
-  <span style="color: #22c55e">●</span> <strong>Login to Langtrain</strong> (Required for most features)
-  ○ Agents
-  ○ Langtune (Text)
-  ○ Langvision (Vision)
-  ○ Initialize Project
-  ○ Deploy
-  ○ Start Dev Server
-  ○ Doctor
-  ○ Settings
-  ○ Exit
-</pre>
-</div>
 
 <details>
 <summary><strong>Troubleshooting Installation</strong></summary>
