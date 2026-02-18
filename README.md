@@ -10,8 +10,8 @@
   <p>
     <a href="https://www.npmjs.com/package/langtrain"><img src="https://img.shields.io/npm/v/langtrain?style=flat-square&labelColor=18181b&color=22c55e" alt="npm version" /></a>
     <a href="https://www.npmjs.com/package/langtrain"><img src="https://img.shields.io/npm/dm/langtrain?style=flat-square&labelColor=18181b&color=3b82f6" alt="npm downloads" /></a>
-    <a href="https://langtrain.ai"><img src="https://img.shields.io/badge/website-langtrain.ai-18181b?style=flat-square&labelColor=18181b" alt="website" /></a>
-    <a href="https://docs.langtrain.ai"><img src="https://img.shields.io/badge/docs-documentation-18181b?style=flat-square&labelColor=18181b" alt="documentation" /></a>
+    <a href="https://langtrain.xyz"><img src="https://img.shields.io/badge/website-langtrain.xyz-18181b?style=flat-square&labelColor=18181b" alt="website" /></a>
+    <a href="https://docs.langtrain.xyz"><img src="https://img.shields.io/badge/docs-documentation-18181b?style=flat-square&labelColor=18181b" alt="documentation" /></a>
     <a href="https://github.com/langtrain-ai/langtrain-sdk/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/langtrain?style=flat-square&labelColor=18181b&color=3b82f6" alt="license" /></a>
   </p>
 
@@ -21,8 +21,8 @@
   <p><strong>Langtrain CLI</strong> is a unified AI engineering platform that runs locally on your computer and connects to the Langtrain Cloud.</p>
 
   <p>
-    If you want Langtrain in your code editor, <a href="https://langtrain.ai/docs/vscode">install the VS Code Extension.</a><br/>
-    If you are looking for the <em>web-based platform</em>, <strong>Langtrain Web</strong>, go to <a href="https://langtrain.ai">langtrain.ai</a>.
+    If you want Langtrain in your code editor, <a href="https://langtrain.xyz/docs/vscode">install the VS Code Extension.</a><br/>
+    If you are looking for the <em>web-based platform</em>, <strong>Langtrain Web</strong>, go to <a href="https://langtrain.xyz">langtrain.xyz</a>.
   </p>
 </div>
 
@@ -53,7 +53,7 @@ sudo npm install -g langtrain
 
 ### Using Langtrain with your Cloud Plan
 
-Run `langtrain login` and enter your API Key from the dashboard to authenticate. We recommend signing into your Langtrain account to use **Cloud Finetuning**, **Agent Persistence**, and **Model Hosting** as part of your Pro or Enterprise plan. [Learn more about Langtrain Plans](https://langtrain.ai/pricing).
+Run `langtrain login` and enter your API Key from the dashboard to authenticate. We recommend signing into your Langtrain account to use **Cloud Finetuning**, **Agent Persistence**, and **Model Hosting** as part of your Pro or Enterprise plan. [Learn more about Langtrain Plans](https://langtrain.xyz/pricing).
 
 Check your subscription status and limits:
 ```shell
@@ -124,8 +124,8 @@ const client = new Langvision({
 
 ## Documentation
 
-- [**Langtrain Documentation**](https://docs.langtrain.ai)
-- [**SDK Reference**](https://docs.langtrain.ai/sdk)
+- [**Langtrain Documentation**](https://docs.langtrain.xyz)
+- [**SDK Reference**](https://docs.langtrain.xyz/sdk)
 - [**Contributing**](./CONTRIBUTING.md)
 
 ## License
