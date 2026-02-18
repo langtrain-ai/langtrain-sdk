@@ -21,7 +21,6 @@
   <p><strong>Langtrain CLI</strong> is a unified AI engineering platform that runs locally on your computer and connects to the Langtrain Cloud.</p>
 
   <p>
-    If you want Langtrain in your code editor, <a href="https://langtrain.xyz/docs/vscode">install the VS Code Extension.</a><br/>
     If you are looking for the <em>web-based platform</em>, <strong>Langtrain Web</strong>, go to <a href="https://langtrain.xyz">langtrain.xyz</a>.
   </p>
 </div>
