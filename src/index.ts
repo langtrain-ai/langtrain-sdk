@@ -11,6 +11,7 @@ export { SubscriptionClient, SubscriptionInfo, FeatureCheck } from './lib/subscr
 export { ModelClient, Model } from './lib/models';
 export { SecretClient, Secret } from './lib/secrets';
 export { GuardrailClient, Guardrail, GuardrailConfig, GuardrailCreate } from './lib/guardrails';
+export { UsageClient, UsageSummary, UsageHistoryPoint } from './lib/usage';
 
 // Export Types with Namespaces to avoid collisions
 import * as Vision from 'langvision';
