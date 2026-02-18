@@ -12,7 +12,8 @@
   <h1>The Unified AI Engineering Platform</h1>
   
   <p style="font-size: 1.2rem; max-width: 600px; margin: 0 auto; color: #666;">
-    Build, fine-tune, and deploy autonomous agents with a single workflow. 
+    Build, fine-tune, and deploy autonomous agents with a single workflow.
+    <br />
     Langtrain bridges the gap between local development and enterprise-grade cloud infrastructure.
   </p>
 
@@ -37,7 +38,7 @@
 <br />
 <br />
 
-## 🚀 Quick Start
+## Quick Start
 
 Get up and running in seconds. Langtrain CLI is your gateway to the entire ecosystem.
 
@@ -60,21 +61,21 @@ sudo npm install -g langtrain
 
 <br />
 
-## ✨ Features
+## Features
 
 Langtrain provides a complete toolkit for the modern AI engineer.
 
 | Feature | Description |
 | :--- | :--- |
-| **🤖 Autonomous Agents** | Create, manage, and chat with custom agents. Routable via `lt agent`. |
-| **🧠 Langtune** | Fine-tune LLMs (Llama 3, Mistral) locally using QLoRA or dispatch to H100s. |
-| **👁️ Langvision** | Optimize multimodal datasets and vision models for edge deployment. |
-| **🔐 Enterprise Security** | Local-first architecture. Your data leaves your machine only when you say so. |
-| **⚡ Instant Deploy** | Push your verified agents to production endpoints with `lt deploy`. |
+| **Autonomous Agents** | Create, manage, and chat with custom agents. Routable via `lt agent`. |
+| **Langtune** | Fine-tune LLMs (Llama 3, Mistral) locally using QLoRA or dispatch to H100s. |
+| **Langvision** | Optimize multimodal datasets and vision models for edge deployment. |
+| **Enterprise Security** | Local-first architecture. Your data leaves your machine only when you say so. |
+| **Instant Deploy** | Push your verified agents to production endpoints with `lt deploy`. |
 
 <br />
 
-## 💻 SDK Integration
+## SDK Integration
 
 Use the power of Langtrain directly in your Node.js or TypeScript applications.
 
@@ -104,7 +105,7 @@ async function main() {
 
 <br />
 
-## 🛠️ Configuration
+## Configuration
 
 Configure your environment seamlessly via CLI or environment variables.
 
@@ -117,7 +118,7 @@ Configure your environment seamlessly via CLI or environment variables.
 
 <br />
 
-## 🌐 Community & Support
+##  Community & Support
 
 Join the thousands of engineers building with Langtrain.
 
