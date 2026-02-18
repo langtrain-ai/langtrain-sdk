@@ -146,11 +146,30 @@ export async function handleAgentList(client: AgentClient) {
     await handleAgentRun(client, agentId as string, agents.find(a => a.id === agentId)?.name || 'Agent');
 }
 
-export async function handleAgentRun(client: AgentClient, agentId: string, agentName: string) {
+export async function handleAgentRun(client: AgentClient, agentId: string, agentName: string, initialMessage?: string) {
     intro(bgCyan(black(` Chatting with ${agentName} `)));
     console.log(gray('Type "exit" to quit conversation.'));
 
     let conversationId: string | undefined = undefined;
+
+    // Send initial message if provided
+    if (initialMessage) {
+        const s = spinner();
+        s.start('Agent is analyzing...');
+        try {
+            const result = await client.execute(agentId, { prompt: initialMessage }, [], conversationId);
+            s.stop();
+            if ((result.output as any)?.response) {
+                console.log(gradient.pastel(`Agent: ${(result.output as any).response}`));
+            } else {
+                console.log(gradient.pastel(`Agent: ${JSON.stringify(result.output)}`));
+            }
+            conversationId = result.conversation_id;
+        } catch (e: any) {
+            s.stop(red('Error running agent.'));
+            console.error(e);
+        }
+    }
 
     while (true) {
         const input = await text({

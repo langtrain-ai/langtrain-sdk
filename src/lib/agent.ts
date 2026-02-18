@@ -65,6 +65,13 @@ export class AgentClient {
         });
         return response.data;
     }
+
+    async logs(agentId: string, limit: number = 100): Promise<{ logs: string[] }> {
+        const response = await this.client.get<{ logs: string[] }>(`/agents/${agentId}/logs`, {
+            params: { limit }
+        });
+        return response.data;
+    }
 }
 
 export interface AgentConfig {

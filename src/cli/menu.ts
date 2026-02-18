@@ -6,7 +6,7 @@ export interface MenuOption {
     hint?: string;
 }
 
-export type MenuState = 'main' | 'agents' | 'text' | 'vision' | 'settings';
+export type MenuState = 'main' | 'agents' | 'text' | 'vision' | 'guard' | 'settings';
 
 export function getMenu(state: MenuState, plan: SubscriptionInfo | null, isAuthenticated: boolean): MenuOption[] {
     const isPro = plan?.plan === 'pro' || plan?.plan === 'enterprise';
@@ -21,9 +21,12 @@ export function getMenu(state: MenuState, plan: SubscriptionInfo | null, isAuthe
                 { value: 'nav-agents', label: 'Agents', hint: 'Manage & Chat with AI Agents' },
                 { value: 'nav-text', label: 'Langtune (Text)', hint: 'Fine-tuning & Generation' },
                 { value: 'nav-vision', label: 'Langvision (Vision)', hint: 'Vision Analysis & Tuning' },
+                { value: 'nav-guard', label: 'Data Guardrails', hint: 'Quality & Safety Rules' },
                 { value: 'init', label: 'Initialize Project', hint: 'Scaffold new Langtrain app' },
                 { value: 'deploy', label: 'Deploy', hint: 'Push config to Cloud' },
                 { value: 'dev', label: 'Start Dev Server', hint: 'Watch mode' },
+                { value: 'env', label: 'Secrets (Env)', hint: 'Manage API Keys' },
+                { value: 'logs', label: 'Logs', hint: 'View Agent Logs' },
                 { value: 'doctor', label: 'Doctor', hint: 'Check environment health' },
                 { value: 'nav-settings', label: 'Settings', hint: 'Subscription & Auth' }
             ];
@@ -53,6 +56,14 @@ export function getMenu(state: MenuState, plan: SubscriptionInfo | null, isAuthe
                 { value: 'tune-list', label: 'List Jobs', hint: 'Check training status' },
                 { value: 'tune-generate', label: 'Generate Text', hint: 'Test your models' },
                 { value: 'data-upload', label: 'Upload Dataset', hint: 'Upload JSONL for training' },
+                { value: 'back', label: '← Back to Main Menu' }
+            ];
+
+        case 'guard':
+            return [
+                { value: 'guard-list', label: 'List Guardrails', hint: 'View active rules' },
+                { value: 'guard-create', label: 'Create Guardrail', hint: 'Define new rules' },
+                { value: 'data-refine', label: 'Refine Dataset', hint: 'Apply guardrail to data' },
                 { value: 'back', label: '← Back to Main Menu' }
             ];
 
