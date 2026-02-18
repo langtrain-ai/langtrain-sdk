@@ -1,12 +1,23 @@
 <div align="center">
+  <br />
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/langtrain-ai/langtrain-sdk/main/public/langtrain-white.svg">
     <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/langtrain-ai/langtrain-sdk/main/public/langtrain-black.svg">
-    <img alt="Langtrain Logo" src="https://raw.githubusercontent.com/langtrain-ai/langtrain-sdk/main/public/langtrain-black.svg" width="250">
+    <img alt="Langtrain Logo" src="https://raw.githubusercontent.com/langtrain-ai/langtrain-sdk/main/public/langtrain-black.svg" width="280">
   </picture>
-  <h3>Langtrain SDK</h3>
-  <p>The unified intelligence layer for JavaScript applications.</p>
   
+  <br />
+  <br />
+
+  <h1>The Unified AI Engineering Platform</h1>
+  
+  <p style="font-size: 1.2rem; max-width: 600px; margin: 0 auto; color: #666;">
+    Build, fine-tune, and deploy autonomous agents with a single workflow. 
+    Langtrain bridges the gap between local development and enterprise-grade cloud infrastructure.
+  </p>
+
+  <br />
+
   <p>
     <a href="https://www.npmjs.com/package/langtrain"><img src="https://img.shields.io/npm/v/langtrain?style=flat-square&labelColor=18181b&color=22c55e" alt="npm version" /></a>
     <a href="https://www.npmjs.com/package/langtrain"><img src="https://img.shields.io/npm/dm/langtrain?style=flat-square&labelColor=18181b&color=3b82f6" alt="npm downloads" /></a>
@@ -15,125 +26,112 @@
     <a href="https://github.com/langtrain-ai/langtrain-sdk/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/langtrain?style=flat-square&labelColor=18181b&color=3b82f6" alt="license" /></a>
   </p>
 
-  <br/>
+  <br />
 
-  <p align="center"><code>npm i -g langtrain</code></p>
-  <p><strong>Langtrain CLI</strong> is a unified AI engineering platform that runs locally on your computer and connects to the Langtrain Cloud.</p>
+  <a href="https://langtrain.xyz">
+    <img src="./assets/cli-demo.png" alt="Langtrain CLI Interface" width="100%" style="border-radius: 12px; border: 1px solid #333; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);" />
+  </a>
 
-  <p align="center">
-    <img src="./assets/cli-demo.png " alt="Langtrain CLI Screenshot" width="800" style="border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);" />
-  </p>
-
-  <p>
-    If you are looking for the <em>web-based platform</em>, <strong>Langtrain Web</strong>, go to <a href="https://langtrain.xyz">langtrain.xyz</a>.
-  </p>
 </div>
 
----
+<br />
+<br />
 
-## Quickstart (CLI)
+## 🚀 Quick Start
 
-Install globally with npm:
+Get up and running in seconds. Langtrain CLI is your gateway to the entire ecosystem.
 
-```shell
+```bash
+# Install globally
 npm install -g langtrain
-```
 
-Then run `langtrain` to start the interactive AI engineering studio:
-
-```shell
+# Start the interactive studio
 lt
 ```
-
-
 
 <details>
 <summary><strong>Troubleshooting Installation</strong></summary>
 
-If you encounter permission errors, try running with sudo or fix your npm permissions:
+If you encounter permission errors, try running with sudo or check your npm permissions:
 ```bash
 sudo npm install -g langtrain
 ```
 </details>
 
-### Using Langtrain with your Cloud Plan
+<br />
 
-Run `lt login` and enter your API Key from the dashboard to authenticate. We recommend signing into your Langtrain account to use **Cloud Finetuning**, **Agent Persistence**, and **Model Hosting** as part of your Pro or Enterprise plan. [Learn more about Langtrain Plans](https://langtrain.xyz/pricing).
+## ✨ Features
 
-Check your subscription status and limits:
-```shell
-lt status
-```
-*Free plans allow local fine-tuning. Upgrade to Pro for cloud-based GPU training.*
+Langtrain provides a complete toolkit for the modern AI engineer.
 
----
+| Feature | Description |
+| :--- | :--- |
+| **🤖 Autonomous Agents** | Create, manage, and chat with custom agents. Routable via `lt agent`. |
+| **🧠 Langtune** | Fine-tune LLMs (Llama 3, Mistral) locally using QLoRA or dispatch to H100s. |
+| **👁️ Langvision** | Optimize multimodal datasets and vision models for edge deployment. |
+| **🔐 Enterprise Security** | Local-first architecture. Your data leaves your machine only when you say so. |
+| **⚡ Instant Deploy** | Push your verified agents to production endpoints with `lt deploy`. |
 
-## SDK Usage
+<br />
 
-You can also use `langtrain` as a library in your Node.js applications to build intelligent agents and workflows.
+## 💻 SDK Integration
+
+Use the power of Langtrain directly in your Node.js or TypeScript applications.
 
 ```typescript
-import { Langvision, Langtune, SubscriptionClient } from 'langtrain';
+import { Langvision, Langtune } from 'langtrain';
 
-// 1. Initialize Clients
+// Initialize with your project context
 const vision = new Langvision({ apiKey: process.env.LANGTRAIN_API_KEY });
 const tune = new Langtune({ apiKey: process.env.LANGTRAIN_API_KEY });
 
-async function analyzeAndTune() {
-  // Analyze visual user context
-  const context = await vision.analyze({
-    image: './dashboard.jpg',
-    features: ['layout', 'text'] 
+async function main() {
+  // 1. Analyze Visual Context
+  const analysis = await vision.analyze({
+    image: './dashboard.png',
+    prompt: 'Extract UI component hierarchy'
   });
 
-  console.log('Visual Context:', context);
-
-  // Generate optimized response
-  const response = await tune.generate({
-    model: 'gpt-4-vision-optimized',
-    prompt: `Explain this dashboard layout: ${context.description}`
+  // 2. Generate Optimized Code
+  const code = await tune.generate({
+    model: 'gpt-4-turbo',
+    prompt: `Create a React component based on: ${analysis.description}`
   });
   
-  console.log(response);
+  console.log(code);
 }
 ```
 
-## Features
+<br />
 
-- **AI Agents**: Create, manage, and chat with custom AI agents hosted on Langtrain Server.
-- **Langtune**: Fine-tune LLMs (Llama 3, Mistral) locally or on the cloud.
-- **Langvision**: Optimize and fine-tune multimodal vision models.
-- **Data Persistence**: Automatically sync datasets and training jobs with your workspace.
-- **Subscription Management**: Verify plan limits and feature access programmatically.
+## 🛠️ Configuration
 
-## Configuration
-
-The SDK and CLI can be configured using environment variables `(dotenv supported)` or via `lt login`.
+Configure your environment seamlessly via CLI or environment variables.
 
 | Variable | Description |
 | :--- | :--- |
-| `LANGTRAIN_API_KEY` | Your project API Key (get it from the dashboard). |
-| `LANGTRAIN_WORKSPACE_ID` | (Optional) Workspace ID for specific environment interaction. |
+| `LANGTRAIN_API_KEY` | Your project Secret Key (find it in Settings). |
+| `LANGTRAIN_WORKSPACE_ID` | (Optional) Target specific workspace environments. |
 
-```typescript
-// Example: Manually passing config
-const client = new Langvision({
-  apiKey: "lt_sk_...",
-  workspaceId: "ws_..."
-});
-```
+> **Pro Tip:** Run `lt login` to authenticate continuously without managing `.env` files manually.
 
-## Community & Support
+<br />
 
-- **[GitHub Discussions](https://github.com/langtrain-ai/langtrain-sdk/discussions)**: Ask questions and share ideas.
+## 🌐 Community & Support
 
-## Documentation
+Join the thousands of engineers building with Langtrain.
 
-- [**Langtrain Documentation**](https://docs.langtrain.xyz)
-- [**SDK Reference**](https://docs.langtrain.xyz/sdk)
-- [**Contributing**](./CONTRIBUTING.md)
+- **[Documentation](https://docs.langtrain.xyz)** - Guides, API Reference, and Tutorials.
+- **[GitHub Discussions](https://github.com/langtrain-ai/langtrain-sdk/discussions)** - Ask questions, request features.
+- **[Enterprise Support](mailto:support@langtrain.xyz)** - Dedicated support for teams.
 
-## License
+<br />
 
-This repository is licensed under the [MIT License](LICENSE).
-copyright © [Langtrain](https://langtrain.xyz)
+---
+
+<div align="center">
+  <p style="color: #666; font-size: 0.9rem;">
+    © 2024 Langtrain AI Inc. All rights reserved. <br />
+    <a href="https://langtrain.xyz/privacy">Privacy Policy</a> • <a href="https://langtrain.xyz/terms">Terms of Service</a>
+  </p>
+</div>
