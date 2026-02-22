@@ -250,7 +250,7 @@ export async function main() {
                         break;
 
                     case 'docs':
-                        console.log(colors.cyan('\n  📖 https://docs.langtrain.ai\n'));
+                        console.log(colors.cyan('\n  📖 https://docs.langtrain.xyz\n'));
                         break;
 
                     // Status & info

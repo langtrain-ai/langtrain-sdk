@@ -14,7 +14,7 @@ export function getMenu(state: MenuState, plan: SubscriptionInfo | null, isAuthe
     if (!isAuthenticated) {
         return [
             { value: 'login', label: '→ Login', hint: 'Authenticate with your API key' },
-            { value: 'docs', label: '  Documentation', hint: 'https://docs.langtrain.ai' },
+            { value: 'docs', label: '  Documentation', hint: 'https://docs.langtrain.xyz' },
             { value: 'exit', label: '  Exit' }
         ];
     }

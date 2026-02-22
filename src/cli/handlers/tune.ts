@@ -73,7 +73,7 @@ export async function handleTuneFinetune(tune: Langtune, modelClient: ModelClien
                 s.stop(red('Feature "cloud_finetuning" is not available on your plan.'));
                 const upgrade = await confirm({ message: 'Upgrade to Pro for cloud tracking?' });
                 if (upgrade && !isCancel(upgrade)) {
-                    console.log(bgMagenta(black(' Visit https://langtrain.ai/dashboard/billing to upgrade. ')));
+                    console.log(bgMagenta(black(' Visit https://langtrain.xyz/dashboard/billing to upgrade. ')));
                 }
                 return;
             }
@@ -91,7 +91,7 @@ export async function handleTuneFinetune(tune: Langtune, modelClient: ModelClien
                 dataset_id: fileResp.id,
                 task: 'text',
                 hyperparameters: {
-                    n_epochs: parseInt(epochs as string)
+                    epochs: parseInt(epochs as string)
                 }
             });
             s.stop(green(`Job tracked: ${job.id}`));
@@ -179,7 +179,7 @@ export async function handleTuneList(trainingClient: TrainingClient) {
         // Display Table
         const table = createTable(['ID', 'Status', 'Model', 'Progress', 'Created']);
         jobs.data.forEach(j => {
-            const statusColor = j.status === 'succeeded' ? green : (j.status === 'failed' ? red : yellow);
+            const statusColor = j.status === 'completed' ? green : (j.status === 'failed' ? red : yellow);
             table.push([
                 j.id.substring(0, 8) + '...',
                 statusColor(j.status),
@@ -227,13 +227,13 @@ export async function handleTuneStatus(trainingClient: TrainingClient, jobId?: s
         console.log(`${bgMagenta(black(' Job Details '))}`);
         console.log(`ID:        ${job.id}`);
         console.log(`Name:      ${job.name}`);
-        console.log(`Status:    ${job.status === 'succeeded' ? green(job.status) : job.status}`);
+        console.log(`Status:    ${job.status === 'completed' ? green(job.status) : job.status}`);
         console.log(`Model:     ${job.base_model}`);
         console.log(`Progress:  ${job.progress || 0}%`);
         if (job.error_message) console.log(red(`Error:     ${job.error_message}`));
         console.log(gray('------------------------------------------------'));
 
-        if (job.status === 'running' || job.status === 'queued') {
+        if (job.status === 'running' || job.status === 'pending') {
             const action = await select({
                 message: 'Action:',
                 options: [

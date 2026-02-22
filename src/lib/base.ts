@@ -32,7 +32,7 @@ export interface RequestEvent {
     rateLimitReset?: number;
 }
 
-const DEFAULT_BASE_URL = 'https://api.langtrain.ai/api/v1';
+const DEFAULT_BASE_URL = 'https://api.langtrain.xyz/v1';
 const DEFAULT_TIMEOUT = 30_000;
 const DEFAULT_MAX_RETRIES = 2;
 const DEFAULT_MAX_RPS = 10;

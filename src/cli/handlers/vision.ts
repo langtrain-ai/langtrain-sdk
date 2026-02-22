@@ -74,7 +74,7 @@ export async function handleVisionFinetune(vision: Langvision, modelClient: Mode
                 s.stop(red('Feature "cloud_finetuning" is not available on your plan.'));
                 const upgrade = await confirm({ message: 'Upgrade to Pro for cloud tracking?' });
                 if (upgrade && !isCancel(upgrade)) {
-                    console.log(bgMagenta(black(' Visit https://langtrain.ai/dashboard/billing to upgrade. ')));
+                    console.log(bgMagenta(black(' Visit https://langtrain.xyz/dashboard/billing to upgrade. ')));
                 }
                 return;
             }
@@ -93,7 +93,7 @@ export async function handleVisionFinetune(vision: Langvision, modelClient: Mode
                 task: 'vision',
                 training_method: 'lora',
                 hyperparameters: {
-                    n_epochs: parseInt(epochs as string)
+                    epochs: parseInt(epochs as string)
                 }
             });
             s.stop(green(`Job tracked: ${job.id}`));

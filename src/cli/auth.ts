@@ -10,7 +10,7 @@ const execAsync = promisify(exec);
 function getApiBase() {
     const config = getConfig();
     const base = (config.baseUrl || 'https://api.langtrain.xyz').replace(/\/$/, '');
-    return `${base}/api/v1`;
+    return `${base}/v1`;
 }
 
 async function openBrowser(url: string) {
