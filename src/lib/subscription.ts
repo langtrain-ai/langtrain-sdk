@@ -36,6 +36,11 @@ export interface SubscriptionInfo {
     expires_at?: string;
     features: string[];
     limits: any;
+    usage?: {
+        tokensUsedThisMonth?: number;
+        tokenLimit?: number;
+        apiCalls?: number;
+    };
 }
 
 export interface FeatureCheck {

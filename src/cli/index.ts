@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import path from 'path';
-import { select, isCancel, outro, intro, colors } from './ui'; // Ensure clear is exported if added, otherwise use console.clear()
-import { showBanner } from './ui';
-import { ensureAuth, handleLogin, getSubscription } from './auth';
+import { select, isCancel, outro, intro, colors, showBanner } from './ui';
+import { ensureAuth, handleLogin, handleLogout, getSubscription, isAuthenticated } from './auth';
 import { getMenu, MenuState } from './menu';
 import { getConfig } from './config';
 
@@ -18,13 +16,55 @@ import { handleDataUpload, handleDataRefine } from './handlers/data';
 import { handleDeploy } from './handlers/deploy';
 import { handleDev } from './handlers/dev';
 import { handleGuardrailList, handleGuardrailCreate } from './handlers/guardrails';
-
 import { handleEnvMenu } from './handlers/env';
 import { handleLogs } from './handlers/logs';
+import { handleTokens, handleTelemetry } from './handlers/telemetry';
 
 // Clients
 import { SubscriptionInfo, Langvision, Langtune, AgentClient, ModelClient, FileClient, TrainingClient, SecretClient } from '../index';
 import packageJson from '../../package.json';
+
+function showStatusBar(plan: SubscriptionInfo | null) {
+    const { dim, green, yellow, cyan, bold, gray } = colors;
+
+    const planLabel = plan?.plan === 'pro'
+        ? bold(green('PRO'))
+        : plan?.plan === 'enterprise'
+            ? bold(green('ENTERPRISE'))
+            : dim('FREE');
+
+    const tokensUsed = plan?.usage?.tokensUsedThisMonth || 0;
+    const tokenLimit = plan?.usage?.tokenLimit || 10000;
+    const pct = Math.round((tokensUsed / tokenLimit) * 100);
+    const tokenBar = pct > 80 ? yellow(`${pct}%`) : green(`${pct}%`);
+
+    console.log(dim('  ─────────────────────────────────────────────'));
+    console.log(`  ${dim('Plan:')} ${planLabel}  ${dim('│')}  ${dim('Tokens:')} ${tokensUsed.toLocaleString()}/${tokenLimit.toLocaleString()} ${tokenBar}`);
+    console.log(dim('  ─────────────────────────────────────────────\n'));
+}
+
+function buildClients(apiKey: string, baseUrl?: string) {
+    return {
+        vision: new Langvision({ apiKey }),
+        tune: new Langtune({ apiKey }),
+        agent: new AgentClient({ apiKey, baseUrl }),
+        model: new ModelClient({ apiKey, baseUrl }),
+        train: new TrainingClient({ apiKey, baseUrl }),
+        secret: new SecretClient({ apiKey, baseUrl }),
+    };
+}
+
+function getMessageForState(state: MenuState): string {
+    switch (state) {
+        case 'main': return 'What would you like to do?';
+        case 'agents': return 'Agents:';
+        case 'text': return 'Langtune (Text):';
+        case 'vision': return 'Langvision (Vision):';
+        case 'guard': return 'Guardrails:';
+        case 'settings': return 'Settings:';
+        default: return 'Select an option:';
+    }
+}
 
 export async function main() {
     const program = new Command();
@@ -32,10 +72,10 @@ export async function main() {
 
     program
         .name('langtrain')
-        .description(packageJson.description || 'Langtrain CLI for AI Model Fine-tuning and Generation')
+        .description('Langtrain CLI — Fine-tuning, Agents, and AI Ops')
         .version(version);
 
-    // Register standalone commands
+    // ── Standalone commands (work without interactive mode) ─────────────
     program.command('init')
         .description('Initialize a new Langtrain project')
         .action(handleInit);
@@ -50,7 +90,7 @@ export async function main() {
         });
 
     program.command('dev')
-        .description('Start local development server (Watch Mode)')
+        .description('Start local development server')
         .action(async () => {
             const config = getConfig();
             const apiKey = config.apiKey || '';
@@ -76,57 +116,91 @@ export async function main() {
             await handleLogs(client, agent);
         });
 
+    program.command('login')
+        .description('Authenticate with your API key')
+        .action(async () => {
+            await handleLogin();
+        });
+
+    program.command('logout')
+        .description('Clear stored credentials')
+        .action(async () => {
+            await handleLogout();
+        });
+
+    program.command('tokens')
+        .description('View token usage for current period')
+        .action(handleTokens);
+
+    // ── Data commands ──────────────────────────────────────────────────
+    const dataCommand = program.command('data').description('Manage datasets');
+
+    dataCommand.command('upload [file]')
+        .description('Upload a dataset')
+        .action(async () => {
+            const config = getConfig();
+            const client = new FileClient({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleDataUpload(client);
+        });
+
+    dataCommand.command('refine [fileId]')
+        .description('Refine a dataset using guardrails')
+        .action(async (fileId) => {
+            const config = getConfig();
+            const client = new FileClient({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleDataRefine(client, fileId);
+        });
+
+    // ── Guardrail commands ─────────────────────────────────────────────
+    const guardCommand = program.command('guardrails').description('Manage data guardrails');
+
+    guardCommand.command('list')
+        .description('List available guardrails')
+        .action(async () => await handleGuardrailList(null));
+
+    guardCommand.command('create')
+        .description('Create a new guardrail')
+        .action(async () => await handleGuardrailCreate(null));
+
+    // ── Interactive mode (default action) ──────────────────────────────
     program.action(async () => {
         showBanner(version);
 
-        // 1. Auth & Plan Check Force
-        // 1. Auth & Plan Check (Lazy)
-        // 0. First Run Check
+        // First-run check
         const isFirstRun = process.argv.includes('--first-run');
         if (isFirstRun) {
-            // Check if interactive
             if (process.stdin.isTTY) {
                 intro('Welcome to Langtrain! Let\'s get you set up.');
                 await handleLogin();
-                // Reload config after login
             } else {
                 console.log('Langtrain installed! Run "npx langtrain login" to authenticate.');
                 process.exit(0);
             }
         }
 
-        // 1. Auth & Plan Check (Lazy)
+        // ── Auth-gated flow ───────────────────────────────────────────
         let config = getConfig();
         let apiKey = config.apiKey || '';
+        let authed = isAuthenticated();
         let plan: SubscriptionInfo | null = null;
 
-        // Try to fetch plan if key exists? 
-        if (apiKey) {
+        // If authenticated, show status bar
+        if (authed && apiKey) {
             try { plan = await getSubscription(apiKey); } catch { }
+            showStatusBar(plan);
+        } else {
+            console.log(colors.dim('  Not logged in. Only basic options available.\n'));
         }
 
-        // 2. Global Client Init
-        let clients = {
-            vision: new Langvision({ apiKey }),
-            tune: new Langtune({ apiKey }),
-            agent: new AgentClient({ apiKey, baseUrl: config.baseUrl }),
-            model: new ModelClient({ apiKey, baseUrl: config.baseUrl }),
-            train: new TrainingClient({ apiKey, baseUrl: config.baseUrl }),
-            secret: new SecretClient({ apiKey, baseUrl: config.baseUrl })
-        };
+        let clients = authed ? buildClients(apiKey, config.baseUrl) : null;
 
-        // 3. Navigation Loop
+        // ── Navigation loop ──────────────────────────────────────────
         let currentState: MenuState = 'main';
 
         while (true) {
-            // Clear screen for clean sub-menu navigation?
-            // Maybe not full clear to keep banner, but at least separate visual blocks.
-            // showBanner(version); // Re-showing banner might be too much flickering.
-            // console.log(''); // simple spacer
-
             const operation = await select({
                 message: getMessageForState(currentState),
-                options: getMenu(currentState, plan, !!apiKey)
+                options: getMenu(currentState, plan, authed)
             });
 
             if (isCancel(operation)) {
@@ -141,135 +215,88 @@ export async function main() {
 
             const op = operation as string;
 
-            // Navigation Logic
-            if (op === 'exit') {
-                outro('Goodbye!');
-                process.exit(0);
-            }
-            if (op === 'back') {
-                currentState = 'main';
-                continue;
-            }
-            if (op.startsWith('nav-')) {
-                currentState = op.replace('nav-', '') as MenuState;
-                continue;
-            }
+            // Navigation
+            if (op === 'exit') { outro('Goodbye!'); process.exit(0); }
+            if (op === 'back') { currentState = 'main'; continue; }
+            if (op.startsWith('nav-')) { currentState = op.replace('nav-', '') as MenuState; continue; }
 
-            // Action Logic
+            // Actions
             try {
                 switch (op) {
+                    // Auth
                     case 'login':
                         await handleLogin();
                         config = getConfig();
                         apiKey = config.apiKey || '';
-                        clients = {
-                            vision: new Langvision({ apiKey }),
-                            tune: new Langtune({ apiKey }),
-                            agent: new AgentClient({ apiKey, baseUrl: config.baseUrl }),
-                            model: new ModelClient({ apiKey, baseUrl: config.baseUrl }),
-                            train: new TrainingClient({ apiKey, baseUrl: config.baseUrl }),
-                            secret: new SecretClient({ apiKey, baseUrl: config.baseUrl })
-                        };
-                        try { plan = await getSubscription(apiKey); } catch { }
+                        authed = isAuthenticated();
+                        if (authed) {
+                            try { plan = await getSubscription(apiKey); } catch { }
+                            clients = buildClients(apiKey, config.baseUrl);
+                            console.clear();
+                            showBanner(version);
+                            showStatusBar(plan);
+                        }
                         break;
+
+                    case 'logout':
+                        await handleLogout();
+                        apiKey = '';
+                        authed = false;
+                        plan = null;
+                        clients = null;
+                        console.clear();
+                        showBanner(version);
+                        console.log(colors.dim('  Logged out. Only basic options available.\n'));
+                        break;
+
+                    case 'docs':
+                        console.log(colors.cyan('\n  📖 https://docs.langtrain.ai\n'));
+                        break;
+
+                    // Status & info
                     case 'status': await handleSubscriptionStatus(); break;
-                    case 'init': await handleInit(); break;
-                    case 'deploy': await handleDeploy(clients.agent); break;
-                    case 'dev': await handleDev(clients.agent); break;
-                    case 'env': await handleEnvMenu(clients.secret); break;
-                    case 'logs': await handleLogs(clients.agent); break;
+                    case 'tokens': await handleTokens(); break;
+                    case 'telemetry': await handleTelemetry(); break;
                     case 'doctor': await handleDoctor(); break;
-                    case 'tune-finetune': await handleTuneFinetune(clients.tune, clients.model); break;
-                    case 'tune-list': await handleTuneList(clients.train); break;
-                    case 'tune-generate': await handleTuneGenerate(clients.tune); break;
-                    case 'vision-finetune': await handleVisionFinetune(clients.vision, clients.model); break;
-                    case 'vision-generate': await handleVisionGenerate(clients.vision); break;
-                    case 'agent-list': await handleAgentList(clients.agent); break;
-                    case 'agent-create': await handleAgentCreate(clients.agent, clients.model); break;
-                    case 'agent-delete': await handleAgentDelete(clients.agent); break;
-                    case 'data-upload': await handleDataUpload(new FileClient({ apiKey })); break;
+
+                    // Project
+                    case 'init': await handleInit(); break;
+                    case 'deploy': if (clients) await handleDeploy(clients.agent); break;
+                    case 'dev': if (clients) await handleDev(clients.agent); break;
+                    case 'env': if (clients) await handleEnvMenu(clients.secret); break;
+                    case 'logs': if (clients) await handleLogs(clients.agent); break;
+
+                    // Tune
+                    case 'tune-finetune': if (clients) await handleTuneFinetune(clients.tune, clients.model); break;
+                    case 'tune-list': if (clients) await handleTuneList(clients.train); break;
+                    case 'tune-generate': if (clients) await handleTuneGenerate(clients.tune); break;
+
+                    // Vision
+                    case 'vision-finetune': if (clients) await handleVisionFinetune(clients.vision, clients.model); break;
+                    case 'vision-generate': if (clients) await handleVisionGenerate(clients.vision); break;
+
+                    // Agents
+                    case 'agent-list': if (clients) await handleAgentList(clients.agent); break;
+                    case 'agent-create': if (clients) await handleAgentCreate(clients.agent, clients.model); break;
+                    case 'agent-delete': if (clients) await handleAgentDelete(clients.agent); break;
+
+                    // Data
+                    case 'data-upload':
+                        if (apiKey) await handleDataUpload(new FileClient({ apiKey }));
+                        break;
+                    case 'data-refine':
+                        if (apiKey) await handleDataRefine(new FileClient({ apiKey }));
+                        break;
+
+                    // Guardrails
                     case 'guard-list': await handleGuardrailList(null); break;
                     case 'guard-create': await handleGuardrailCreate(null); break;
-                    case 'data-refine': await handleDataRefine(new FileClient({ apiKey })); break;
                 }
-
-                // After action, where do we go? 
-                // Stay in current state (sub-menu) is usually preferred.
-
             } catch (error: any) {
                 outro(colors.red(`Error: ${error.message}`));
             }
         }
     });
 
-    const dataCommand = program.command('data')
-        .description('Manage datasets');
-
-    dataCommand.command('upload [file]')
-        .description('Upload a dataset')
-        .action(async (file) => {
-            const config = getConfig();
-            const apiKey = config.apiKey || '';
-            const client = new FileClient({ apiKey, baseUrl: config.baseUrl });
-            // handleDataUpload only takes client, file is prompted inside or we need to update handleDataUpload signature
-            await handleDataUpload(client);
-        });
-
-    dataCommand.command('analyze')
-        .description('Analyze a dataset with AI')
-        .action(async () => {
-            const config = getConfig();
-            const apiKey = config.apiKey || '';
-            const client = new FileClient({ apiKey, baseUrl: config.baseUrl });
-            // handleDataAnalyze needs to be exported/imported
-            // Assuming I named it handleDataAnalyze in previous step (I did edit existing function, likely need to rename or export new one)
-            // Wait, I updated handleDataList in previous step to be the analyze function? 
-            // No, I added code TO handleDataList or replaced it?
-            // Let me check previous tool call.
-            // I replaced the end of handleDataList (the mocked download part) with analyze logic?
-            // I should verify data.ts structure. 
-            // Let's assume I need to properly export handleDataAnalyze.
-            // For now, I'll register it assuming export.
-            // For now, I'll register it assuming export.
-            const { handleDataList } = require('./handlers/data');
-            await handleDataList(client);
-        });
-
-    dataCommand.command('refine [fileId]')
-        .description('Refine a dataset using guardrails')
-        .action(async (fileId) => {
-            const config = getConfig();
-            const apiKey = config.apiKey || '';
-            const client = new FileClient({ apiKey, baseUrl: config.baseUrl });
-            await handleDataRefine(client, fileId);
-        });
-
-    const guardCommand = program.command('guardrails')
-        .description('Manage data guardrails');
-
-    guardCommand.command('list')
-        .description('List available guardrails')
-        .action(async () => {
-            await handleGuardrailList(null);
-        });
-
-    guardCommand.command('create')
-        .description('Create a new guardrail')
-        .action(async () => {
-            await handleGuardrailCreate(null);
-        });
-
-
     main().catch(console.error);
-
-    function getMessageForState(state: MenuState): string {
-        switch (state) {
-            case 'main': return 'Main Menu:';
-            case 'agents': return 'Agents & Tools:';
-            case 'text': return 'Langtune (Text Operations):';
-            case 'vision': return 'Langvision (Vision Operations):';
-            case 'settings': return 'Settings:';
-            default: return 'Select an option:';
-        }
-    }
 }

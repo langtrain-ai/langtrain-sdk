@@ -9,45 +9,44 @@ export interface MenuOption {
 export type MenuState = 'main' | 'agents' | 'text' | 'vision' | 'guard' | 'settings';
 
 export function getMenu(state: MenuState, plan: SubscriptionInfo | null, isAuthenticated: boolean): MenuOption[] {
-    const isPro = plan?.plan === 'pro' || plan?.plan === 'enterprise';
 
-    // If not authenticated, force login or limited menu?
-    // User requested "lazy auth", so we should show menu but maybe highlight login or allow navigation and prompt later.
-    // Let's add a visual cue.
+    // ── Unauthenticated: Claude-style minimal menu ─────────────────────────
+    if (!isAuthenticated) {
+        return [
+            { value: 'login', label: '→ Login', hint: 'Authenticate with your API key' },
+            { value: 'docs', label: '  Documentation', hint: 'https://docs.langtrain.ai' },
+            { value: 'exit', label: '  Exit' }
+        ];
+    }
+
+    // ── Authenticated menus ────────────────────────────────────────────────
+    const planLabel = plan?.plan === 'pro' ? 'PRO' : plan?.plan === 'enterprise' ? 'ENTERPRISE' : 'FREE';
 
     switch (state) {
         case 'main':
-            const menu: MenuOption[] = [
-                { value: 'nav-agents', label: 'Agents', hint: 'Manage & Chat with AI Agents' },
-                { value: 'nav-text', label: 'Langtune (Text)', hint: 'Fine-tuning & Generation' },
-                { value: 'nav-vision', label: 'Langvision (Vision)', hint: 'Vision Analysis & Tuning' },
-                { value: 'nav-guard', label: 'Data Guardrails', hint: 'Quality & Safety Rules' },
-                { value: 'init', label: 'Initialize Project', hint: 'Scaffold new Langtrain app' },
-                { value: 'deploy', label: 'Deploy', hint: 'Push config to Cloud' },
-                { value: 'dev', label: 'Start Dev Server', hint: 'Watch mode' },
-                { value: 'env', label: 'Secrets (Env)', hint: 'Manage API Keys' },
-                { value: 'logs', label: 'Logs', hint: 'View Agent Logs' },
-                { value: 'doctor', label: 'Doctor', hint: 'Check environment health' },
-                { value: 'nav-settings', label: 'Settings', hint: 'Subscription & Auth' }
+            return [
+                { value: 'nav-agents', label: '  Agents', hint: 'Manage & deploy AI agents' },
+                { value: 'nav-text', label: '  Langtune', hint: 'Text fine-tuning & generation' },
+                { value: 'nav-vision', label: '  Langvision', hint: 'Vision fine-tuning & analysis' },
+                { value: 'nav-guard', label: '  Guardrails', hint: 'Data quality & safety rules' },
+                { value: 'init', label: '  Init Project', hint: 'Scaffold new Langtrain app' },
+                { value: 'deploy', label: '  Deploy', hint: 'Push to Langtrain Cloud' },
+                { value: 'dev', label: '  Dev Server', hint: 'Local watch mode' },
+                { value: 'env', label: '  Secrets', hint: 'Manage environment variables' },
+                { value: 'logs', label: '  Logs', hint: 'Stream agent logs' },
+                { value: 'tokens', label: '  Token Usage', hint: 'View consumption this period' },
+                { value: 'telemetry', label: '  Telemetry', hint: 'Session stats & API health' },
+                { value: 'doctor', label: '  Doctor', hint: 'Check environment health' },
+                { value: 'nav-settings', label: '  Settings', hint: `Plan: ${planLabel}` },
+                { value: 'exit', label: '  Exit' }
             ];
-
-            if (!isAuthenticated) {
-                // menu.unshift({ value: 'login', label: 'Login to Langtrain', hint: 'Required for most features' });
-                // Actually, let's make Login the first option if not authenticated
-                // But keep the others so user can see what's available (and get prompted)
-                menu.unshift({ value: 'login', label: 'Login to Langtrain', hint: 'Required for most features' });
-            }
-
-            // Always add Exit
-            menu.push({ value: 'exit', label: 'Exit' });
-            return menu;
 
         case 'agents':
             return [
                 { value: 'agent-list', label: 'List & Run Agents', hint: 'Chat with active agents' },
                 { value: 'agent-create', label: 'Create New Agent', hint: 'Deploy a new agent' },
                 { value: 'agent-delete', label: 'Delete Agent', hint: 'Remove an agent' },
-                { value: 'back', label: '← Back to Main Menu' }
+                { value: 'back', label: '← Back' }
             ];
 
         case 'text':
@@ -56,7 +55,7 @@ export function getMenu(state: MenuState, plan: SubscriptionInfo | null, isAuthe
                 { value: 'tune-list', label: 'List Jobs', hint: 'Check training status' },
                 { value: 'tune-generate', label: 'Generate Text', hint: 'Test your models' },
                 { value: 'data-upload', label: 'Upload Dataset', hint: 'Upload JSONL for training' },
-                { value: 'back', label: '← Back to Main Menu' }
+                { value: 'back', label: '← Back' }
             ];
 
         case 'guard':
@@ -64,21 +63,24 @@ export function getMenu(state: MenuState, plan: SubscriptionInfo | null, isAuthe
                 { value: 'guard-list', label: 'List Guardrails', hint: 'View active rules' },
                 { value: 'guard-create', label: 'Create Guardrail', hint: 'Define new rules' },
                 { value: 'data-refine', label: 'Refine Dataset', hint: 'Apply guardrail to data' },
-                { value: 'back', label: '← Back to Main Menu' }
+                { value: 'back', label: '← Back' }
             ];
 
         case 'vision':
             return [
                 { value: 'vision-finetune', label: 'Fine-tune Vision Model', hint: 'Create custom VLM' },
                 { value: 'vision-generate', label: 'Generate Vision Response', hint: 'Test vision models' },
-                { value: 'back', label: '← Back to Main Menu' }
+                { value: 'back', label: '← Back' }
             ];
 
         case 'settings':
             return [
-                { value: 'status', label: isAuthenticated ? `Subscription Status (${plan?.plan || 'Free'})` : 'Check Status (Login required)' },
-                { value: 'login', label: isAuthenticated ? 'Update API Key' : 'Login' },
-                { value: 'back', label: '← Back to Main Menu' }
+                { value: 'status', label: `Subscription (${planLabel})`, hint: 'View plan details' },
+                { value: 'tokens', label: 'Token Usage', hint: 'View consumption' },
+                { value: 'telemetry', label: 'Telemetry', hint: 'Session & API health' },
+                { value: 'login', label: 'Update API Key', hint: 'Change credentials' },
+                { value: 'logout', label: 'Logout', hint: 'Clear stored credentials' },
+                { value: 'back', label: '← Back' }
             ];
 
         default:
