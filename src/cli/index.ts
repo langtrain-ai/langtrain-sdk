@@ -298,5 +298,7 @@ export async function main() {
         }
     });
 
-    main().catch(console.error);
+    program.parse(process.argv);
 }
+
+main().catch(console.error);
