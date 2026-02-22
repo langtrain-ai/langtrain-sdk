@@ -6,7 +6,12 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
-const API_BASE = 'https://api.langtrain.ai/api/v1';
+
+function getApiBase() {
+    const config = getConfig();
+    const base = (config.baseUrl || 'https://api.langtrain.ai').replace(/\/$/, '');
+    return `${base}/api/v1`;
+}
 
 async function openBrowser(url: string) {
     try {
@@ -55,7 +60,7 @@ export async function handleLogin() {
 
     try {
         // 1. Request device code
-        const { data: codeData } = await axios.post(`${API_BASE}/auth/device/code`);
+        const { data: codeData } = await axios.post(`${getApiBase()}/auth/device/code`);
         const { device_code, user_code, verification_url, expires_in, interval } = codeData;
 
         s.stop(green('Connected.'));
@@ -80,7 +85,7 @@ export async function handleLogin() {
 
         while (Date.now() - startTime < timeout) {
             try {
-                const { data: tokenData } = await axios.post(`${API_BASE}/auth/device/token?device_code=${device_code}`);
+                const { data: tokenData } = await axios.post(`${getApiBase()}/auth/device/token?device_code=${device_code}`);
 
                 if (tokenData.status === 'approved') {
                     const apiKey = tokenData.api_key;
