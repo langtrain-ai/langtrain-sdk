@@ -1,4 +1,6 @@
-import axios, { AxiosInstance } from 'axios';
+import { BaseClient, ClientConfig } from './base';
+
+// ── Types ──────────────────────────────────────────────────────────────────
 
 export interface Secret {
     key: string;
@@ -6,34 +8,47 @@ export interface Secret {
     updated_at: string;
 }
 
-export class SecretClient {
-    private client: AxiosInstance;
+// ── Client ─────────────────────────────────────────────────────────────────
 
-    constructor(private config: { apiKey: string, baseUrl?: string }) {
-        this.client = axios.create({
-            baseURL: config.baseUrl || 'https://api.langtrain.ai/api/v1',
-            headers: {
-                'X-API-Key': config.apiKey,
-                'Content-Type': 'application/json'
-            }
+/**
+ * Client for managing workspace secrets and environment variables.
+ *
+ * @example
+ * ```ts
+ * const secrets = new SecretClient({ apiKey: 'lt_...' });
+ * await secrets.set('OPENAI_KEY', 'sk-...');
+ * const all = await secrets.list();
+ * ```
+ */
+export class SecretClient extends BaseClient {
+    constructor(config: ClientConfig) {
+        super(config);
+    }
+
+    /** List all secrets in a workspace. Values are redacted. */
+    async list(workspaceId?: string): Promise<Secret[]> {
+        return this.request(async () => {
+            const params: Record<string, string> = {};
+            if (workspaceId) params.workspace_id = workspaceId;
+            const res = await this.http.get<{ secrets: Secret[] }>('/secrets', { params });
+            return res.data.secrets;
         });
     }
 
-    async list(workspaceId?: string): Promise<Secret[]> {
-        const params: any = {};
-        if (workspaceId) params.workspace_id = workspaceId;
-        const response = await this.client.get<{ secrets: Secret[] }>('/secrets', { params });
-        return response.data.secrets;
-    }
-
+    /** Set (create or update) a secret. */
     async set(key: string, value: string, workspaceId?: string): Promise<Secret> {
-        const response = await this.client.post<Secret>('/secrets', { key, value, workspaceId });
-        return response.data;
+        return this.request(async () => {
+            const res = await this.http.post<Secret>('/secrets', { key, value, workspace_id: workspaceId });
+            return res.data;
+        });
     }
 
+    /** Delete a secret by key. */
     async delete(key: string, workspaceId?: string): Promise<void> {
-        const params: any = { key };
-        if (workspaceId) params.workspace_id = workspaceId;
-        await this.client.delete(`/secrets/${key}`, { params });
+        return this.request(async () => {
+            const params: Record<string, string> = {};
+            if (workspaceId) params.workspace_id = workspaceId;
+            await this.http.delete(`/secrets/${key}`, { params });
+        });
     }
 }

@@ -1,4 +1,6 @@
-import axios, { AxiosInstance } from 'axios';
+import { BaseClient, ClientConfig } from './base';
+
+// ── Types ──────────────────────────────────────────────────────────────────
 
 export interface GuardrailConfig {
     pii_enabled: boolean;
@@ -28,45 +30,73 @@ export interface GuardrailCreate {
     config: GuardrailConfig;
 }
 
-export class GuardrailClient {
-    private client: AxiosInstance;
+export interface GuardrailApplyResult {
+    total_rows: number;
+    passed: number;
+    failed: number;
+    violations: Array<{ row: number; rule: string; message: string }>;
+}
 
-    constructor(private config: { apiKey: string, baseUrl?: string }) {
-        this.client = axios.create({
-            baseURL: config.baseUrl || 'https://api.langtrain.ai/api/v1',
-            headers: {
-                'X-API-Key': config.apiKey,
-                'Content-Type': 'application/json'
-            }
-        });
+// ── Client ─────────────────────────────────────────────────────────────────
+
+/**
+ * Client for managing data guardrails (PII, profanity, length, regex).
+ *
+ * @example
+ * ```ts
+ * const guardrails = new GuardrailClient({ apiKey: 'lt_...' });
+ * const rule = await guardrails.create({
+ *     name: 'PII Filter',
+ *     config: { pii_enabled: true, profanity_enabled: false },
+ * });
+ * ```
+ */
+export class GuardrailClient extends BaseClient {
+    constructor(config: ClientConfig) {
+        super(config);
     }
 
+    /** List guardrails, optionally filtered by workspace. */
     async list(workspaceId?: string): Promise<Guardrail[]> {
-        const params: any = {};
-        if (workspaceId) params.workspace_id = workspaceId;
-        const response = await this.client.get<Guardrail[]>('/guardrails/', { params });
-        return response.data;
-    }
-
-    async get(guardrailId: string): Promise<Guardrail> {
-        const response = await this.client.get<Guardrail>(`/guardrails/${guardrailId}`);
-        return response.data;
-    }
-
-    async create(data: GuardrailCreate): Promise<Guardrail> {
-        const response = await this.client.post<Guardrail>('/guardrails/', data);
-        return response.data;
-    }
-
-    async delete(guardrailId: string): Promise<void> {
-        await this.client.delete(`/guardrails/${guardrailId}`);
-    }
-
-    async apply(datasetId: string, guardrailId: string): Promise<any> {
-        const response = await this.client.post('/guardrails/apply', {
-            dataset_id: datasetId,
-            guardrail_id: guardrailId
+        return this.request(async () => {
+            const params: Record<string, string> = {};
+            if (workspaceId) params.workspace_id = workspaceId;
+            const res = await this.http.get<Guardrail[]>('/guardrails/', { params });
+            return res.data;
         });
-        return response.data;
+    }
+
+    /** Get a guardrail by ID. */
+    async get(guardrailId: string): Promise<Guardrail> {
+        return this.request(async () => {
+            const res = await this.http.get<Guardrail>(`/guardrails/${guardrailId}`);
+            return res.data;
+        });
+    }
+
+    /** Create a new guardrail. */
+    async create(data: GuardrailCreate): Promise<Guardrail> {
+        return this.request(async () => {
+            const res = await this.http.post<Guardrail>('/guardrails/', data);
+            return res.data;
+        });
+    }
+
+    /** Delete a guardrail by ID. */
+    async delete(guardrailId: string): Promise<void> {
+        return this.request(async () => {
+            await this.http.delete(`/guardrails/${guardrailId}`);
+        });
+    }
+
+    /** Apply a guardrail to a dataset for validation. */
+    async apply(datasetId: string, guardrailId: string): Promise<GuardrailApplyResult> {
+        return this.request(async () => {
+            const res = await this.http.post<GuardrailApplyResult>('/guardrails/apply', {
+                dataset_id: datasetId,
+                guardrail_id: guardrailId,
+            });
+            return res.data;
+        });
     }
 }

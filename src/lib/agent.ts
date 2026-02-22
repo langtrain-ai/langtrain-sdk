@@ -1,4 +1,6 @@
-import axios, { AxiosInstance } from 'axios';
+import { BaseClient, ClientConfig } from './base';
+
+// ── Types ──────────────────────────────────────────────────────────────────
 
 export interface Agent {
     id: string;
@@ -6,10 +8,26 @@ export interface Agent {
     name: string;
     description?: string;
     model_id?: string;
-    config: Record<string, unknown>;
+    config: AgentConfig;
     is_active: boolean;
     created_at: string;
     updated_at: string;
+}
+
+export interface AgentConfig {
+    system_prompt?: string;
+    temperature?: number;
+    max_tokens?: number;
+    tools?: string[];
+    [key: string]: unknown;
+}
+
+export interface AgentCreate {
+    workspace_id: string;
+    name: string;
+    description?: string;
+    model_id?: string;
+    config?: AgentConfig;
 }
 
 export interface AgentRun {
@@ -22,70 +40,75 @@ export interface AgentRun {
     tokens_used: number;
 }
 
-export class AgentClient {
-    private client: AxiosInstance;
+// ── Client ─────────────────────────────────────────────────────────────────
 
-    constructor(private config: { apiKey: string, baseUrl?: string }) {
-        this.client = axios.create({
-            baseURL: config.baseUrl || 'https://api.langtrain.ai/api/v1',
-            headers: {
-                'X-API-Key': config.apiKey,
-                'Content-Type': 'application/json'
-            }
-        });
+/**
+ * Client for managing AI agents — create, execute, and monitor.
+ *
+ * @example
+ * ```ts
+ * const agents = new AgentClient({ apiKey: 'lt_...' });
+ * const list = await agents.list();
+ * const result = await agents.execute(list[0].id, 'Hello!');
+ * ```
+ */
+export class AgentClient extends BaseClient {
+    constructor(config: ClientConfig) {
+        super(config);
     }
 
+    /** List all agents, optionally filtered by workspace. */
     async list(workspaceId?: string): Promise<Agent[]> {
-        const params: any = {};
-        if (workspaceId) params.workspace_id = workspaceId;
-
-        const response = await this.client.get<{ agents: Agent[] }>('/agents', { params });
-        return response.data.agents;
+        return this.request(async () => {
+            const params: Record<string, string> = {};
+            if (workspaceId) params.workspace_id = workspaceId;
+            const res = await this.http.get<{ agents: Agent[] }>('/agents', { params });
+            return res.data.agents;
+        });
     }
 
+    /** Get a single agent by ID. */
     async get(agentId: string): Promise<Agent> {
-        const response = await this.client.get<Agent>(`/agents/${agentId}`);
-        return response.data;
+        return this.request(async () => {
+            const res = await this.http.get<Agent>(`/agents/${agentId}`);
+            return res.data;
+        });
     }
 
+    /** Create a new agent. */
     async create(agent: AgentCreate): Promise<Agent> {
-        const response = await this.client.post<Agent>('/agents/', agent);
-        return response.data;
+        return this.request(async () => {
+            const res = await this.http.post<Agent>('/agents/', agent);
+            return res.data;
+        });
     }
 
+    /** Delete an agent by ID. */
     async delete(agentId: string): Promise<void> {
-        await this.client.delete(`/agents/${agentId}`);
-    }
-
-    async execute(agentId: string, input: any, messages: any[] = [], conversationId?: string): Promise<AgentRun> {
-        const response = await this.client.post<AgentRun>(`/agents/${agentId}/execute`, {
-            input,
-            messages,
-            conversation_id: conversationId
+        return this.request(async () => {
+            await this.http.delete(`/agents/${agentId}`);
         });
-        return response.data;
     }
 
-    async logs(agentId: string, limit: number = 100): Promise<{ logs: string[] }> {
-        const response = await this.client.get<{ logs: string[] }>(`/agents/${agentId}/logs`, {
-            params: { limit }
+    /** Execute an agent with input and optional conversation context. */
+    async execute(agentId: string, input: string, messages: Array<{ role: string; content: string }> = [], conversationId?: string): Promise<AgentRun> {
+        return this.request(async () => {
+            const res = await this.http.post<AgentRun>(`/agents/${agentId}/execute`, {
+                input,
+                messages,
+                conversation_id: conversationId,
+            });
+            return res.data;
         });
-        return response.data;
     }
-}
 
-export interface AgentConfig {
-    system_prompt?: string;
-    temperature?: number;
-    max_tokens?: number;
-    tools?: string[];
-    [key: string]: any;
-}
-
-export interface AgentCreate {
-    workspace_id: string; // UUID
-    name: string;
-    description?: string;
-    model_id?: string; // UUID
-    config?: AgentConfig;
+    /** Fetch recent logs for an agent. */
+    async logs(agentId: string, limit: number = 100): Promise<string[]> {
+        return this.request(async () => {
+            const res = await this.http.get<{ logs: string[] }>(`/agents/${agentId}/logs`, {
+                params: { limit },
+            });
+            return res.data.logs;
+        });
+    }
 }

@@ -1,4 +1,6 @@
-import axios, { AxiosInstance } from 'axios';
+import { BaseClient, ClientConfig } from './base';
+
+// ── Types ──────────────────────────────────────────────────────────────────
 
 export interface Permission {
     id: string;
@@ -11,13 +13,13 @@ export interface Permission {
     allow_view: boolean;
     allow_fine_tuning: boolean;
     organization: string;
-    group: any;
+    group: string | null;
     is_blocking: boolean;
 }
 
 export interface Model {
     id: string;
-    object: string; // 'model'
+    object: string;
     created: number;
     owned_by: string;
     permission: Permission[];
@@ -26,36 +28,38 @@ export interface Model {
     task?: 'text' | 'vision' | 'agent';
 }
 
-export class ModelClient {
-    private client: AxiosInstance;
+// ── Client ─────────────────────────────────────────────────────────────────
 
-    constructor(config: { apiKey: string, baseUrl?: string }) {
-        this.client = axios.create({
-            baseURL: config.baseUrl || 'https://api.langtrain.ai/api/v1',
-            headers: {
-                'X-API-Key': config.apiKey,
-                'Content-Type': 'application/json'
-            }
+/**
+ * Client for browsing available base models.
+ *
+ * @example
+ * ```ts
+ * const models = new ModelClient({ apiKey: 'lt_...' });
+ * const all = await models.list();
+ * const textModels = await models.list('text');
+ * ```
+ */
+export class ModelClient extends BaseClient {
+    constructor(config: ClientConfig) {
+        super(config);
+    }
+
+    /** List available models, optionally filtered by task type. */
+    async list(task?: 'text' | 'vision' | 'agent'): Promise<Model[]> {
+        return this.request(async () => {
+            const params: Record<string, string> = {};
+            if (task) params.task = task;
+            const res = await this.http.get<{ data: Model[] }>('/models', { params });
+            return res.data.data;
         });
     }
 
-    async list(task?: string): Promise<Model[]> {
-        const params: any = {};
-        if (task) params.task = task;
-
-        try {
-            const response = await this.client.get<{ data: Model[] }>('/models', { params });
-            return response.data.data;
-        } catch (error) {
-            // Fallback if endpoint doesn't support filtering or fails
-            // Verify if /models exists, otherwise return empty or throw
-            // customized error handling could go here
-            throw error;
-        }
-    }
-
+    /** Get a specific model by ID. */
     async get(modelId: string): Promise<Model> {
-        const response = await this.client.get<Model>(`/models/${modelId}`);
-        return response.data;
+        return this.request(async () => {
+            const res = await this.http.get<Model>(`/models/${modelId}`);
+            return res.data;
+        });
     }
 }

@@ -1,39 +1,15 @@
-import axios, { AxiosInstance } from 'axios';
+import { BaseClient, ClientConfig } from './base';
 
-export class TrainingClient {
-    private client: AxiosInstance;
+// ── Types ──────────────────────────────────────────────────────────────────
 
-    constructor(config: { apiKey: string, baseUrl?: string }) {
-        this.client = axios.create({
-            baseURL: config.baseUrl || 'https://api.langtrain.ai/api/v1',
-            headers: {
-                'X-API-Key': config.apiKey,
-                'Content-Type': 'application/json'
-            }
-        });
-    }
-
-    async createJob(job: FineTuneJobCreate): Promise<FineTuneJobResponse> {
-        const response = await this.client.post('/finetune/jobs', job);
-        return response.data;
-    }
-
-    async listJobs(workspaceId: string, limit: number = 10): Promise<FineTuneJobList> {
-        const response = await this.client.get('/finetune/jobs', {
-            params: { workspace_id: workspaceId, limit }
-        });
-        return response.data;
-    }
-
-    async getJob(jobId: string): Promise<FineTuneJobResponse> {
-        const response = await this.client.get(`/finetune/jobs/${jobId}`);
-        return response.data;
-    }
-
-    async cancelJob(jobId: string): Promise<FineTuneJobResponse> {
-        const response = await this.client.post(`/finetune/jobs/${jobId}/cancel`);
-        return response.data;
-    }
+export interface FineTuneHyperparameters {
+    epochs?: number;
+    learning_rate?: number;
+    batch_size?: number;
+    warmup_steps?: number;
+    lora_rank?: number;
+    lora_alpha?: number;
+    weight_decay?: number;
 }
 
 export interface FineTuneJobCreate {
@@ -44,21 +20,78 @@ export interface FineTuneJobCreate {
     guardrail_id?: string;
     task?: 'text' | 'vision';
     training_method?: 'sft' | 'dpo' | 'rlhf' | 'lora' | 'qlora';
-    hyperparameters?: any;
-    [key: string]: any;
+    hyperparameters?: FineTuneHyperparameters;
 }
 
 export interface FineTuneJobResponse {
     id: string;
     name: string;
-    status: string;
+    status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
     progress: number;
     error_message?: string;
+    base_model?: string;
+    training_method?: string;
     created_at: string;
-    [key: string]: any;
+    started_at?: string;
+    completed_at?: string;
 }
 
 export interface FineTuneJobList {
     data: FineTuneJobResponse[];
     has_more: boolean;
+}
+
+// ── Client ─────────────────────────────────────────────────────────────────
+
+/**
+ * Client for managing fine-tuning training jobs.
+ *
+ * @example
+ * ```ts
+ * const training = new TrainingClient({ apiKey: 'lt_...' });
+ * const job = await training.createJob({
+ *     base_model: 'meta-llama/Llama-3.1-8B',
+ *     dataset_id: 'file_abc123',
+ *     training_method: 'lora',
+ * });
+ * ```
+ */
+export class TrainingClient extends BaseClient {
+    constructor(config: ClientConfig) {
+        super(config);
+    }
+
+    /** Create a new fine-tuning job. */
+    async createJob(job: FineTuneJobCreate): Promise<FineTuneJobResponse> {
+        return this.request(async () => {
+            const res = await this.http.post<FineTuneJobResponse>('/finetune/jobs', job);
+            return res.data;
+        });
+    }
+
+    /** List fine-tuning jobs for a workspace. */
+    async listJobs(workspaceId: string, limit: number = 10): Promise<FineTuneJobList> {
+        return this.request(async () => {
+            const res = await this.http.get<FineTuneJobList>('/finetune/jobs', {
+                params: { workspace_id: workspaceId, limit },
+            });
+            return res.data;
+        });
+    }
+
+    /** Get a specific job by ID. */
+    async getJob(jobId: string): Promise<FineTuneJobResponse> {
+        return this.request(async () => {
+            const res = await this.http.get<FineTuneJobResponse>(`/finetune/jobs/${jobId}`);
+            return res.data;
+        });
+    }
+
+    /** Cancel a running job. */
+    async cancelJob(jobId: string): Promise<FineTuneJobResponse> {
+        return this.request(async () => {
+            const res = await this.http.post<FineTuneJobResponse>(`/finetune/jobs/${jobId}/cancel`);
+            return res.data;
+        });
+    }
 }

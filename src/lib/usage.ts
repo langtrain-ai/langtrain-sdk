@@ -1,10 +1,11 @@
+import { BaseClient, ClientConfig } from './base';
 
-import axios, { AxiosInstance } from 'axios';
+// ── Types ──────────────────────────────────────────────────────────────────
 
 export interface UsageSummary {
     workspace_id: string;
     plan: string;
-    quotas: Record<string, any>;
+    quotas: Record<string, number>;
     billing?: {
         plan_id: string;
         tokens_used: number;
@@ -20,36 +21,40 @@ export interface UsageHistoryPoint {
     cost: number;
 }
 
-export class UsageClient {
-    private client: AxiosInstance;
+// ── Client ─────────────────────────────────────────────────────────────────
 
-    constructor(private config: { apiKey: string, baseUrl?: string }) {
-        this.client = axios.create({
-            baseURL: config.baseUrl || 'https://api.langtrain.ai/api/v1',
-            headers: {
-                'X-API-Key': config.apiKey,
-                'Content-Type': 'application/json'
-            }
-        });
+/**
+ * Client for querying usage metrics and billing data.
+ *
+ * @example
+ * ```ts
+ * const usage = new UsageClient({ apiKey: 'lt_...' });
+ * const summary = await usage.getSummary('ws_abc123');
+ * console.log(summary.billing?.tokens_used);
+ * ```
+ */
+export class UsageClient extends BaseClient {
+    constructor(config: ClientConfig) {
+        super(config);
     }
 
-    /**
-     * Get current usage summary for a workspace.
-     */
+    /** Get current usage summary for a workspace. */
     async getSummary(workspaceId: string): Promise<UsageSummary> {
-        const response = await this.client.get<UsageSummary>(`/usage`, {
-            params: { workspace_id: workspaceId }
+        return this.request(async () => {
+            const res = await this.http.get<UsageSummary>('/usage', {
+                params: { workspace_id: workspaceId },
+            });
+            return res.data;
         });
-        return response.data;
     }
 
-    /**
-     * Get historical usage data for charts.
-     */
+    /** Get historical usage data for charts. */
     async getHistory(workspaceId: string, days: number = 30): Promise<UsageHistoryPoint[]> {
-        const response = await this.client.get<{ history: UsageHistoryPoint[] }>(`/usage/history`, {
-            params: { workspace_id: workspaceId, days }
+        return this.request(async () => {
+            const res = await this.http.get<{ history: UsageHistoryPoint[] }>('/usage/history', {
+                params: { workspace_id: workspaceId, days },
+            });
+            return res.data.history;
         });
-        return response.data.history;
     }
 }
