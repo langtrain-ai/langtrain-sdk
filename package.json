@@ -1,13 +1,13 @@
 {
   "name": "langtrain",
-  "version": "0.2.9-0",
+  "version": "0.2.9",
   "description": "Unified JavaScript SDK for Langtrain Ecosystem",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "bin": {
-    "langtrain": "./dist/cli.js",
-    "lt": "./dist/cli.js"
+    "langtrain": "dist/cli.js",
+    "lt": "dist/cli.js"
   },
   "scripts": {
     "build": "tsup",
