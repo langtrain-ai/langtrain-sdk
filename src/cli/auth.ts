@@ -55,89 +55,8 @@ export async function ensureAuth(): Promise<string> {
  * Interactive login — browser-based OAuth flow with API key fallback.
  */
 export async function handleLogin() {
-    const s = spinner();
-    s.start('Connecting to Langtrain...');
-
-    try {
-        // 1. Request device code
-        const { data: codeData } = await axios.post(`${getApiBase()}/auth/device/code`);
-        const { device_code, user_code, verification_url, expires_in, interval } = codeData;
-
-        s.stop(green('Connected.'));
-
-        console.log('\n  ' + bgMagenta(black(' AUTHENTICATION ')) + '\n');
-        console.log(`  To log in, please open your browser to:\n  ${cyan(verification_url + '?code=' + user_code)}\n`);
-
-        note(
-            `Confirmation Code:\n${bold(user_code)}`,
-            'Verify in Browser'
-        );
-
-        console.log(gray('  Opening browser automatically...'));
-        await openBrowser(`${verification_url}?code=${user_code}`);
-
-        const pollSpinner = spinner();
-        pollSpinner.start('Waiting for approval in browser...');
-
-        // 2. Poll for token
-        const startTime = Date.now();
-        const timeout = expires_in * 1000;
-
-        while (Date.now() - startTime < timeout) {
-            try {
-                const { data: tokenData } = await axios.post(`${getApiBase()}/auth/device/token?device_code=${device_code}`);
-
-                if (tokenData.status === 'approved') {
-                    const apiKey = tokenData.api_key;
-                    pollSpinner.stop(green('Approved!'));
-
-                    const verifySpinner = spinner();
-                    verifySpinner.start('Verifying credentials...');
-
-                    try {
-                        const client = new SubscriptionClient({ apiKey });
-                        const info = await client.getStatus();
-
-                        const planBadge = info.plan === 'pro'
-                            ? bgMagenta(black(' PRO '))
-                            : info.plan === 'enterprise'
-                                ? bgMagenta(black(' ENTERPRISE '))
-                                : ' FREE ';
-
-                        verifySpinner.stop(green(`Authenticated ${planBadge}`));
-
-                        const config = getConfig();
-                        saveConfig({ ...config, apiKey });
-                        console.log(green('  ✔ Credentials saved to ~/.langtrain/config.json\n'));
-                        return;
-                    } catch (e: any) {
-                        verifySpinner.stop(red('Verification failed.'));
-                        console.log(red(`\n  Error: ${e.message}`));
-                        console.log(gray('  Please try manual login or check your connection.\n'));
-                        break; // Stop polling if verification fails after approval
-                    }
-                }
-
-                if (tokenData.status === 'expired') {
-                    pollSpinner.stop(red('Device code expired.'));
-                    break;
-                }
-
-                // Wait for the requested interval
-                await new Promise(r => setTimeout(r, interval * 1000));
-            } catch (err) {
-                // Ignore network errors during polling
-                await new Promise(r => setTimeout(r, interval * 1000));
-            }
-        }
-
-        pollSpinner.stop(yellow('Login timed out.'));
-    } catch (err: any) {
-        s.stop(red('Could not reach Langtrain server.'));
-    }
-
-    // 3. Fallback to manual entry if browser flow fails
-    console.log(gray('\n  Browser login failed or timed out. Falling back to manual entry.'));
+    console.log('\n  ' + bgMagenta(black(' AUTHENTICATION ')) + '\n');
+    console.log(gray('  To log in, you will need your personal API Key.'));
 
     while (true) {
         console.log(dim('  ─────────────────────────────────────'));
@@ -153,7 +72,7 @@ export async function handleLogin() {
         });
 
         if (isCancel(apiKey)) {
-            cancel('Operation cancelled');
+            cancel('Login cancelled.');
             process.exit(0);
         }
 
@@ -174,10 +93,14 @@ export async function handleLogin() {
 
             const config = getConfig();
             saveConfig({ ...config, apiKey: apiKey as string });
-            console.log(green('  ✔ Credentials saved to ~/.langtrain/config.json\n'));
+            console.log(green('  ✔ Credentials saved locally. You are now logged in!\n'));
             return;
         } catch (e: any) {
-            verifySpinner.stop(red('Invalid API Key. Please try again.'));
+            verifySpinner.stop(red('Invalid API Key.'));
+            if (e.message) {
+                console.log(red(`\n  Server Error: ${e.message}`));
+            }
+            console.log(yellow('  Please ensure your key is valid and you have an active account.\n'));
         }
     }
 }

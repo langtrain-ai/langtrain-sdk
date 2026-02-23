@@ -255,15 +255,17 @@ export abstract class BaseClient {
                     : parsed;
             }
 
-            const message = serverMessage
-                ? String(serverMessage)
-                : error.code === 'ECONNABORTED'
-                    ? `Request timed out`
-                    : status === 429
-                        ? `Rate limited${retryAfter ? ` — retry in ${retryAfter}s` : ''}`
-                        : status
-                            ? `API request failed with status ${status}`
-                            : `Network error: ${error.message}`;
+            const message = typeof serverMessage === 'object'
+                ? JSON.stringify(serverMessage, null, 2)
+                : serverMessage
+                    ? String(serverMessage)
+                    : error.code === 'ECONNABORTED'
+                        ? `Request timed out`
+                        : status === 429
+                            ? `Rate limited${retryAfter ? ` — retry in ${retryAfter}s` : ''}`
+                            : status
+                                ? `API request failed with status ${status}`
+                                : `Network error: ${error.message}`;
 
             return new LangtrainError(message, {
                 status,
