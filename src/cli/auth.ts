@@ -94,21 +94,28 @@ export async function handleLogin() {
                     const verifySpinner = spinner();
                     verifySpinner.start('Verifying credentials...');
 
-                    const client = new SubscriptionClient({ apiKey });
-                    const info = await client.getStatus();
+                    try {
+                        const client = new SubscriptionClient({ apiKey });
+                        const info = await client.getStatus();
 
-                    const planBadge = info.plan === 'pro'
-                        ? bgMagenta(black(' PRO '))
-                        : info.plan === 'enterprise'
-                            ? bgMagenta(black(' ENTERPRISE '))
-                            : ' FREE ';
+                        const planBadge = info.plan === 'pro'
+                            ? bgMagenta(black(' PRO '))
+                            : info.plan === 'enterprise'
+                                ? bgMagenta(black(' ENTERPRISE '))
+                                : ' FREE ';
 
-                    verifySpinner.stop(green(`Authenticated ${planBadge}`));
+                        verifySpinner.stop(green(`Authenticated ${planBadge}`));
 
-                    const config = getConfig();
-                    saveConfig({ ...config, apiKey });
-                    console.log(green('  ✔ Credentials saved to ~/.langtrain/config.json\n'));
-                    return;
+                        const config = getConfig();
+                        saveConfig({ ...config, apiKey });
+                        console.log(green('  ✔ Credentials saved to ~/.langtrain/config.json\n'));
+                        return;
+                    } catch (e: any) {
+                        verifySpinner.stop(red('Verification failed.'));
+                        console.log(red(`\n  Error: ${e.message}`));
+                        console.log(gray('  Please try manual login or check your connection.\n'));
+                        break; // Stop polling if verification fails after approval
+                    }
                 }
 
                 if (tokenData.status === 'expired') {
