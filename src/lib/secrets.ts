@@ -26,28 +26,28 @@ export class SecretClient extends BaseClient {
     }
 
     /** List all secrets in a workspace. Values are redacted. */
-    async list(workspaceId?: string): Promise<Secret[]> {
+    async list(projectId?: string): Promise<Secret[]> {
         return this.request(async () => {
             const params: Record<string, string> = {};
-            if (workspaceId) params.workspace_id = workspaceId;
+            if (projectId) params.project_id = projectId;
             const res = await this.http.get<{ secrets: Secret[] }>('/secrets', { params });
             return res.data.secrets;
         });
     }
 
     /** Set (create or update) a secret. */
-    async set(key: string, value: string, workspaceId?: string): Promise<Secret> {
+    async set(key: string, value: string, projectId?: string): Promise<Secret> {
         return this.request(async () => {
-            const res = await this.http.post<Secret>('/secrets', { key, value, workspace_id: workspaceId });
+            const res = await this.http.post<Secret>('/secrets', { key, value, project_id: projectId });
             return res.data;
         });
     }
 
     /** Delete a secret by key. */
-    async delete(key: string, workspaceId?: string): Promise<void> {
+    async delete(key: string, projectId?: string): Promise<void> {
         return this.request(async () => {
             const params: Record<string, string> = {};
-            if (workspaceId) params.workspace_id = workspaceId;
+            if (projectId) params.project_id = projectId;
             await this.http.delete(`/secrets/${key}`, { params });
         });
     }

@@ -3,7 +3,7 @@ import { BaseClient, ClientConfig } from './base';
 // ── Types ──────────────────────────────────────────────────────────────────
 
 export interface KnowledgeBaseCreate {
-    workspace_id: string;
+    project_id: string;
     name: string;
     description?: string;
     model_id?: string;
@@ -14,7 +14,7 @@ export interface KnowledgeBaseCreate {
 
 export interface KnowledgeBaseResponse {
     id: string;
-    workspace_id: string;
+    project_id: string;
     name: string;
     description?: string;
     model_id?: string;
@@ -46,6 +46,14 @@ export interface IngestResponse {
     error?: string;
 }
 
+export interface CortexEntity {
+    id: string;
+    dataset_id: string;
+    type: string;
+    value: string;
+    confidence: number;
+}
+
 // ── Client ─────────────────────────────────────────────────────────────────
 
 /**
@@ -55,7 +63,7 @@ export interface IngestResponse {
  * ```ts
  * const knowledge = new KnowledgeClient({ apiKey: 'lt_...' });
  * const kb = await knowledge.create({
- *     workspace_id: 'ws_123',
+ *     project_id: 'ws_123',
  *     name: 'Company Documentation',
  * });
  * 
@@ -77,10 +85,10 @@ export class KnowledgeClient extends BaseClient {
     }
 
     /** List Knowledge Bases for a workspace. */
-    async list(workspaceId: string): Promise<KnowledgeBaseResponse[]> {
+    async list(projectId: string): Promise<KnowledgeBaseResponse[]> {
         return this.request(async () => {
             const res = await this.http.get<KnowledgeBaseResponse[]>('/knowledge/', {
-                params: { workspace_id: workspaceId },
+                params: { project_id: projectId },
             });
             return res.data;
         });
@@ -120,6 +128,16 @@ export class KnowledgeClient extends BaseClient {
     async delete(kbId: string): Promise<void> {
         return this.request(async () => {
             await this.http.delete(`/knowledge/${kbId}`);
+        });
+    }
+
+    /** Get all extracted Knowledge Entities for Cortex Data Plane. */
+    async listEntities(datasetId?: string): Promise<CortexEntity[]> {
+        return this.request(async () => {
+            const res = await this.http.get<CortexEntity[]>('/knowledge/entities', {
+                params: datasetId ? { dataset_id: datasetId } : undefined,
+            });
+            return res.data;
         });
     }
 }

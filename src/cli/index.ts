@@ -12,16 +12,17 @@ import { handleVisionFinetune, handleVisionGenerate } from './handlers/vision';
 import { handleAgentCreate, handleAgentDelete, handleAgentList } from './handlers/agent';
 import { handleInit } from './handlers/init';
 import { handleDoctor } from './handlers/doctor';
-import { handleDataUpload, handleDataRefine } from './handlers/data';
+import { handleDataUpload, handleDataRefine, handleDataList } from './handlers/data';
 import { handleDeploy } from './handlers/deploy';
 import { handleDev } from './handlers/dev';
 import { handleGuardrailList, handleGuardrailCreate } from './handlers/guardrails';
 import { handleEnvMenu } from './handlers/env';
 import { handleLogs } from './handlers/logs';
 import { handleTokens, handleTelemetry } from './handlers/telemetry';
+import { handleKnowledgeEntities } from './handlers/knowledge';
 
 // Clients
-import { SubscriptionInfo, Langvision, Langtune, AgentClient, ModelClient, FileClient, TrainingClient, SecretClient } from '../index';
+import { SubscriptionInfo, Langvision, Langtune, AgentClient, ModelClient, FileClient, TrainingClient, SecretClient, KnowledgeClient } from '../index';
 import packageJson from '../../package.json';
 
 function showStatusBar(plan: SubscriptionInfo | null) {
@@ -51,6 +52,7 @@ function buildClients(apiKey: string, baseUrl?: string) {
         model: new ModelClient({ apiKey, baseUrl }),
         train: new TrainingClient({ apiKey, baseUrl }),
         secret: new SecretClient({ apiKey, baseUrl }),
+        knowledge: new KnowledgeClient({ apiKey, baseUrl }),
     };
 }
 
@@ -60,6 +62,7 @@ function getMessageForState(state: MenuState): string {
         case 'agents': return 'Agents:';
         case 'text': return 'Langtune (Text):';
         case 'vision': return 'Langvision (Vision):';
+        case 'knowledge': return 'Cortex Intelligence:';
         case 'guard': return 'Guardrails:';
         case 'settings': return 'Settings:';
         default: return 'Select an option:';
@@ -281,12 +284,18 @@ export async function main() {
                     case 'agent-delete': if (clients) await handleAgentDelete(clients.agent); break;
 
                     // Data
+                    case 'data-list':
+                        if (apiKey) await handleDataList(new FileClient({ apiKey }));
+                        break;
                     case 'data-upload':
                         if (apiKey) await handleDataUpload(new FileClient({ apiKey }));
                         break;
                     case 'data-refine':
                         if (apiKey) await handleDataRefine(new FileClient({ apiKey }));
                         break;
+
+                    // Knowledge
+                    case 'knowledge-entities': if (clients) await handleKnowledgeEntities(clients.knowledge); break;
 
                     // Guardrails
                     case 'guard-list': await handleGuardrailList(null); break;

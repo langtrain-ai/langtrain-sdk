@@ -3,7 +3,7 @@ import { BaseClient, ClientConfig } from './base';
 // ── Types ──────────────────────────────────────────────────────────────────
 
 export interface UsageSummary {
-    workspace_id: string;
+    project_id: string;
     plan: string;
     quotas: Record<string, number>;
     billing?: {
@@ -39,20 +39,20 @@ export class UsageClient extends BaseClient {
     }
 
     /** Get current usage summary for a workspace. */
-    async getSummary(workspaceId: string): Promise<UsageSummary> {
+    async getSummary(projectId: string): Promise<UsageSummary> {
         return this.request(async () => {
             const res = await this.http.get<UsageSummary>('/usage', {
-                params: { workspace_id: workspaceId },
+                params: { project_id: projectId },
             });
             return res.data;
         });
     }
 
     /** Get historical usage data for charts. */
-    async getHistory(workspaceId: string, days: number = 30): Promise<UsageHistoryPoint[]> {
+    async getHistory(projectId: string, days: number = 30): Promise<UsageHistoryPoint[]> {
         return this.request(async () => {
             const res = await this.http.get<{ history: UsageHistoryPoint[] }>('/usage/history', {
-                params: { workspace_id: workspaceId, days },
+                params: { project_id: projectId, days },
             });
             return res.data.history;
         });

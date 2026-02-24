@@ -4,7 +4,7 @@ import { BaseClient, ClientConfig } from './base';
 
 export interface Agent {
     id: string;
-    workspace_id: string;
+    project_id: string;
     name: string;
     description?: string;
     model_id?: string;
@@ -23,7 +23,7 @@ export interface AgentConfig {
 }
 
 export interface AgentCreate {
-    workspace_id: string;
+    project_id: string;
     name: string;
     description?: string;
     model_id?: string;
@@ -58,10 +58,10 @@ export class AgentClient extends BaseClient {
     }
 
     /** List all agents, optionally filtered by workspace. */
-    async list(workspaceId?: string): Promise<Agent[]> {
+    async list(projectId?: string): Promise<Agent[]> {
         return this.request(async () => {
             const params: Record<string, string> = {};
-            if (workspaceId) params.workspace_id = workspaceId;
+            if (projectId) params.project_id = projectId;
             const res = await this.http.get<{ agents: Agent[] }>('/agents', { params });
             return res.data.agents;
         });

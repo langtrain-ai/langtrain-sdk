@@ -15,7 +15,7 @@ export interface GuardrailConfig {
 
 export interface Guardrail {
     id: string;
-    workspace_id: string;
+    project_id: string;
     name: string;
     description?: string;
     config: GuardrailConfig;
@@ -57,10 +57,10 @@ export class GuardrailClient extends BaseClient {
     }
 
     /** List guardrails, optionally filtered by workspace. */
-    async list(workspaceId?: string): Promise<Guardrail[]> {
+    async list(projectId?: string): Promise<Guardrail[]> {
         return this.request(async () => {
             const params: Record<string, string> = {};
-            if (workspaceId) params.workspace_id = workspaceId;
+            if (projectId) params.project_id = projectId;
             const res = await this.http.get<Guardrail[]>('/guardrails/', { params });
             return res.data;
         });

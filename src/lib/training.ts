@@ -70,10 +70,10 @@ export class TrainingClient extends BaseClient {
     }
 
     /** List fine-tuning jobs for a workspace. */
-    async listJobs(workspaceId: string, limit: number = 10): Promise<FineTuneJobList> {
+    async listJobs(projectId: string, limit: number = 10): Promise<FineTuneJobList> {
         return this.request(async () => {
             const res = await this.http.get<FineTuneJobList>('/finetune/jobs', {
-                params: { workspace_id: workspaceId, limit },
+                params: { project_id: projectId, limit },
             });
             return res.data;
         });

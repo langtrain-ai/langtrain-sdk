@@ -6,7 +6,7 @@ export interface MenuOption {
     hint?: string;
 }
 
-export type MenuState = 'main' | 'agents' | 'text' | 'vision' | 'guard' | 'settings';
+export type MenuState = 'main' | 'agents' | 'text' | 'vision' | 'guard' | 'data' | 'knowledge' | 'settings';
 
 export function getMenu(state: MenuState, plan: SubscriptionInfo | null, isAuthenticated: boolean): MenuOption[] {
 
@@ -28,6 +28,8 @@ export function getMenu(state: MenuState, plan: SubscriptionInfo | null, isAuthe
                 { value: 'nav-agents', label: '  Agents', hint: 'Manage & deploy AI agents' },
                 { value: 'nav-text', label: '  Langtune', hint: 'Text fine-tuning & generation' },
                 { value: 'nav-vision', label: '  Langvision', hint: 'Vision fine-tuning & analysis' },
+                { value: 'nav-data', label: '  Data & Checkpoints', hint: 'Manage training datasets' },
+                { value: 'nav-knowledge', label: '  Intelligence Storage', hint: 'View Cortex knowledge graph' },
                 { value: 'nav-guard', label: '  Guardrails', hint: 'Data quality & safety rules' },
                 { value: 'init', label: '  Init Project', hint: 'Scaffold new Langtrain app' },
                 { value: 'deploy', label: '  Deploy', hint: 'Push to Langtrain Cloud' },
@@ -54,7 +56,20 @@ export function getMenu(state: MenuState, plan: SubscriptionInfo | null, isAuthe
                 { value: 'tune-finetune', label: 'Fine-tune Text Model', hint: 'Create custom LLM' },
                 { value: 'tune-list', label: 'List Jobs', hint: 'Check training status' },
                 { value: 'tune-generate', label: 'Generate Text', hint: 'Test your models' },
+                { value: 'back', label: '← Back' }
+            ];
+
+        case 'data':
+            return [
+                { value: 'data-list', label: 'List Datasets', hint: 'View uploaded files' },
                 { value: 'data-upload', label: 'Upload Dataset', hint: 'Upload JSONL for training' },
+                { value: 'data-refine', label: 'Refine Dataset', hint: 'Apply guardrails to clean data' },
+                { value: 'back', label: '← Back' }
+            ];
+
+        case 'knowledge':
+            return [
+                { value: 'knowledge-entities', label: 'Explore Entities', hint: 'View extracted data components' },
                 { value: 'back', label: '← Back' }
             ];
 
@@ -62,7 +77,6 @@ export function getMenu(state: MenuState, plan: SubscriptionInfo | null, isAuthe
             return [
                 { value: 'guard-list', label: 'List Guardrails', hint: 'View active rules' },
                 { value: 'guard-create', label: 'Create Guardrail', hint: 'Define new rules' },
-                { value: 'data-refine', label: 'Refine Dataset', hint: 'Apply guardrail to data' },
                 { value: 'back', label: '← Back' }
             ];
 

@@ -29,7 +29,7 @@ export class FileClient extends BaseClient {
     }
 
     /** Upload a file from a local path. */
-    async upload(filePath: string, workspaceId?: string, purpose: string = 'fine-tune'): Promise<FileResponse> {
+    async upload(filePath: string, projectId?: string, purpose: string = 'fine-tune'): Promise<FileResponse> {
         if (!fs.existsSync(filePath)) {
             throw new Error(`File not found: ${filePath}`);
         }
@@ -37,7 +37,7 @@ export class FileClient extends BaseClient {
         return this.request(async () => {
             const form = new FormData();
             form.append('file', fs.createReadStream(filePath));
-            if (workspaceId) form.append('workspace_id', workspaceId);
+            if (projectId) form.append('project_id', projectId);
             form.append('purpose', purpose);
 
             const res = await this.http.post<FileResponse>('/files', form, {
@@ -50,9 +50,9 @@ export class FileClient extends BaseClient {
     }
 
     /** List files in a workspace, optionally filtered by purpose. */
-    async list(workspaceId: string, purpose?: string): Promise<FileResponse[]> {
+    async list(projectId: string, purpose?: string): Promise<FileResponse[]> {
         return this.request(async () => {
-            const params: Record<string, string> = { workspace_id: workspaceId };
+            const params: Record<string, string> = { project_id: projectId };
             if (purpose) params.purpose = purpose;
             const res = await this.http.get<{ data: FileResponse[] }>('/files', { params });
             return res.data.data;

@@ -1,4 +1,4 @@
-import { text, select, confirm, isCancel, cancel, spinner, intro, red, green, yellow, gray } from '../ui';
+import { text, select, confirm, isCancel, cancel, spinner, intro, red, green, yellow, gray, createTable } from '../ui';
 import { getConfig } from '../config';
 import { FileClient, AgentClient, GuardrailClient } from '../../index';
 import { handleAgentRun } from './agent';
@@ -6,12 +6,14 @@ import fs from 'fs';
 
 export async function handleDataUpload(client: FileClient) {
     const config = getConfig();
-    let workspaceId = config.workspace_id;
+    let projectId = config.project_id;
 
-    if (!workspaceId) {
-        // Optional: ask for workspace ID or try to infer? 
-        // For upload, workspace_id is often optional (inferred from API key's default workspace)
-        // But let's ask if user wants to specify.
+    if (!projectId) {
+        projectId = await text({
+            message: 'Enter Project ID (leave blank for default):',
+            initialValue: ''
+        });
+        if (isCancel(projectId)) return;
     }
 
     const filePath = await text({
@@ -40,7 +42,7 @@ export async function handleDataUpload(client: FileClient) {
     s.start('Uploading file...');
 
     try {
-        const result = await client.upload(filePath as string, workspaceId, purpose as string);
+        const result = await client.upload(filePath as string, projectId, purpose as string);
         s.stop(green('File uploaded successfully!'));
         console.log(gray(`ID: ${result.id}`));
         console.log(gray(`Name: ${result.filename}`));
@@ -52,26 +54,37 @@ export async function handleDataUpload(client: FileClient) {
 
 export async function handleDataList(client: FileClient) {
     const config = getConfig();
-    let workspaceId = config.workspace_id;
+    let projectId = config.project_id;
 
-    if (!workspaceId) {
-        // Try without workspace ID (some APIs return user's files)
-        // or ask
-        workspaceId = await text({ message: 'Enter Workspace ID (optional):', initialValue: '' });
-        if (isCancel(workspaceId)) return;
+    if (!projectId) {
+        projectId = await text({ message: 'Enter Project ID (leave blank for default):', initialValue: '' });
+        if (isCancel(projectId)) return;
     }
 
     const s = spinner();
     s.start('Fetching files...');
 
     try {
-        const files = await client.list(workspaceId as string);
+        const files = await client.list(projectId as string);
         s.stop(`Found ${files.length} files`);
 
         if (files.length === 0) {
             console.log(yellow('No files found.'));
             return;
         }
+
+        const table = createTable(['ID', 'Filename', 'Size', 'Purpose', 'Created']);
+        files.forEach((f: any) => {
+            table.push([
+                f.id.substring(0, 8) + '...',
+                f.filename,
+                formatBytes(f.bytes),
+                f.purpose || 'N/A',
+                new Date(f.created_at || Date.now()).toLocaleDateString()
+            ]);
+        });
+        console.log(table.toString());
+        console.log('');
 
         const file = await select({
             message: 'Select file to analyze (or cancel to exit):',
@@ -123,9 +136,9 @@ export async function handleDataRefine(client: FileClient, fileId?: string) {
         const s = spinner();
         s.start('Fetching files...');
         try {
-            // Need workspace ID logic similar to List?
-            // client.list takes workspaceId.
-            const wId = config.workspace_id || '';
+            // Need project ID logic similar to List?
+            // client.list takes projectId.
+            const wId = config.project_id || '';
             const files = await client.list(wId);
             s.stop(`Found ${files.length} files`);
 
@@ -184,13 +197,15 @@ export async function handleDataRefine(client: FileClient, fileId?: string) {
 
     try {
         const result = await gClient.apply(fileId, guardId);
-        s2.stop(green('Dataset refined successfully!'));
+        s2.stop(green('Dataset evaluated against guardrails.'));
 
         console.log(gray('Stats:'));
-        console.log(`Original Rows: ${result.original_rows}`);
-        console.log(`Filtered Rows: ${result.filtered_rows}`);
-        console.log(red(`Removed: ${result.removed_rows} rows`));
-        console.log(green(`New Dataset ID: ${result.new_dataset_id}`));
+        console.log(`Total Rows: ${result.total_rows}`);
+        console.log(green(`Passed: ${result.passed}`));
+        console.log(red(`Failed: ${result.failed} rows`));
+        if (result.violations?.length > 0) {
+            console.log(yellow(`Found ${result.violations.length} violations.`));
+        }
 
     } catch (e: any) {
         s2.stop(red(`Failed to refine dataset: ${e.message}`));

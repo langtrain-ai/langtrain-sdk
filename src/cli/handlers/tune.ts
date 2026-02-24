@@ -4,125 +4,162 @@ import { Langtune, ModelClient, SubscriptionClient, FileClient, TrainingClient }
 
 // Handler for Langtune Fine-tuning
 export async function handleTuneFinetune(tune: Langtune, modelClient: ModelClient) {
+    const config = getConfig();
+    const isAuthenticated = !!config.apiKey;
+
+    let targetEnv = 'local';
+    if (isAuthenticated) {
+        const envChoice = await select({
+            message: 'Where do you want to train?',
+            options: [
+                { value: 'cloud', label: 'Langtrain Cloud (Recommended)', hint: 'Train on remote GPUs' },
+                { value: 'local', label: 'Local Machine', hint: 'Uses local hardware via Langtune' }
+            ]
+        });
+        if (isCancel(envChoice)) { cancel('Operation cancelled.'); return; }
+        targetEnv = envChoice as string;
+    }
+
     let model: string | symbol = '';
-
     const s = spinner();
-    s.start('Fetching available text models...');
-    try {
-        const models = await modelClient.list('text');
-        s.stop(`Found ${models.length} text models`);
 
-        if (models.length > 0) {
-            model = await select({
-                message: 'Select base model:',
-                options: models.map(m => ({ value: m.id, label: m.id, hint: m.owned_by }))
-            });
+    if (targetEnv === 'cloud') {
+        s.start('Fetching available text models...');
+        try {
+            const models = await modelClient.list('text');
+            s.stop(models.length > 0 ? `Found ${models.length} text models` : 'Ready to configure');
+
+            if (models.length > 0) {
+                model = await select({
+                    message: 'Select base model:',
+                    options: models.map(m => ({ value: m.id, label: m.id, hint: m.owned_by }))
+                });
+            }
+        } catch (e) {
+            s.stop(yellow('Wait, manual input required.'));
         }
-    } catch (e) {
-        s.stop(yellow('Failed to fetch models. Using manual input.'));
+    }
+
+    if (!model || typeof model !== 'string') {
         model = await text({
             message: 'Enter base model (e.g., gpt-3.5-turbo):',
             placeholder: 'gpt-3.5-turbo',
-            validate(value) {
-                if (!value || value.length === 0) return 'Value is required!';
-            },
+            validate(value) { if (!value) return 'Required'; },
         });
     }
-
-    if (isCancel(model)) {
-        cancel('Operation cancelled.');
-        process.exit(0);
-    }
-
-    const trainFile = await text({
-        message: 'Enter path to training file:',
-        placeholder: './data.jsonl',
-        validate(value) {
-            if (!value || value.length === 0) return 'Value is required!';
-        },
-    });
-    if (isCancel(trainFile)) cancel('Operation cancelled.');
+    if (isCancel(model)) return cancel('Operation cancelled.');
 
     const epochs = await text({
         message: 'Num Epochs:',
-        placeholder: '3',
-        initialValue: '3'
+        initialValue: '3',
+        validate(value) { if (!Number(value)) return 'Must be a number'; }
     });
-    if (isCancel(epochs)) cancel('Operation cancelled.');
+    if (isCancel(epochs)) return cancel('Operation cancelled.');
 
-    const track = await select({
-        message: 'Track this job on Langtrain Cloud?',
-        options: [
-            { value: 'yes', label: 'Yes', hint: 'Upload dataset and log job' },
-            { value: 'no', label: 'No', hint: 'Local only' }
-        ]
-    });
-    if (isCancel(track)) cancel('Operation cancelled.');
+    if (targetEnv === 'cloud') {
+        // --- CLOUD FLOW ---
+        const subClient = new SubscriptionClient({ apiKey: config.apiKey! });
+        const sub = await subClient.getStatus();
+        if (!sub.features.includes('cloud_finetuning')) {
+            console.log(red('Feature "cloud_finetuning" is not available on your plan.'));
+            console.log(bgMagenta(black(' Visit https://langtrain.xyz/dashboard/billing to upgrade. ')));
+            return;
+        }
 
-    if (track === 'yes') {
-        const s = spinner();
-        s.start('Connecting to Cloud...');
+        const fileClient = new FileClient({ apiKey: config.apiKey! });
+        const trainingClient = new TrainingClient({ apiKey: config.apiKey! });
+        let datasetId = '';
+
+        s.start('Fetching datasets...');
         try {
-            const config = getConfig();
-            if (!config.apiKey) throw new Error('API Key required. Run "login" first.');
+            const files = await fileClient.list(config.project_id || '');
+            s.stop();
 
-            // Check Subscription
-            const subClient = new SubscriptionClient({ apiKey: config.apiKey });
-            const sub = await subClient.getStatus();
-            if (!sub.features.includes('cloud_finetuning')) {
-                s.stop(red('Feature "cloud_finetuning" is not available on your plan.'));
-                const upgrade = await confirm({ message: 'Upgrade to Pro for cloud tracking?' });
-                if (upgrade && !isCancel(upgrade)) {
-                    console.log(bgMagenta(black(' Visit https://langtrain.xyz/dashboard/billing to upgrade. ')));
-                }
-                return;
+            if (files.length > 0) {
+                const fileChoice = await select({
+                    message: 'Select training dataset:',
+                    options: [
+                        { value: 'new', label: '+ Upload new dataset' },
+                        ...files.map(f => ({ value: f.id, label: f.filename, hint: formatBytes(f.bytes) }))
+                    ]
+                });
+                if (isCancel(fileChoice)) return cancel('Operation cancelled.');
+                datasetId = fileChoice as string;
+            } else {
+                console.log(yellow('No datasets found in cloud.'));
+                datasetId = 'new';
             }
+        } catch (e) {
+            s.stop();
+            datasetId = 'new';
+        }
 
-            const fileClient = new FileClient({ apiKey: config.apiKey });
-            const trainingClient = new TrainingClient({ apiKey: config.apiKey });
+        if (datasetId === 'new') {
+            const trainFile = await text({
+                message: 'Enter path to local training file (JSONL):',
+                placeholder: './data.jsonl',
+                validate(value) { if (!value) return 'Required'; }
+            });
+            if (isCancel(trainFile)) return cancel('Operation cancelled.');
 
-            s.message('Uploading dataset...');
-            const fileResp = await fileClient.upload(trainFile as string);
+            s.start('Uploading dataset...');
+            const fileResp = await fileClient.upload(trainFile as string, config.project_id || '', 'fine-tune');
+            datasetId = fileResp.id;
+            s.stop(green('Dataset uploaded.'));
+        }
 
-            s.message('Creating Job...');
+        s.start('Creating Job...');
+        try {
             const job = await trainingClient.createJob({
                 name: `cli-sft-${Date.now()}`,
                 base_model: model as string,
-                dataset_id: fileResp.id,
+                dataset_id: datasetId,
                 task: 'text',
-                hyperparameters: {
-                    epochs: parseInt(epochs as string)
-                }
+                hyperparameters: { epochs: parseInt(epochs as string) }
             });
-            s.stop(green(`Job tracked: ${job.id}`));
+            s.stop(green(`Job created: ${job.id}`));
+            console.log(gray('Run "lt tune list" or "lt tune status" to track progress.'));
         } catch (e: any) {
-            s.stop(red(`Tracking failed: ${e.message}`));
-            const cont = await confirm({ message: 'Continue with local training anyway?' });
-            if (!cont || isCancel(cont)) return;
+            s.stop(red(`Job creation failed: ${e.message}`));
+        }
+    } else {
+        // --- LOCAL FLOW ---
+        const trainFile = await text({
+            message: 'Enter path to local training file:',
+            placeholder: './data.jsonl',
+            validate(value) { if (!value) return 'Required'; },
+        });
+        if (isCancel(trainFile)) return cancel('Operation cancelled.');
+
+        const s2 = spinner();
+        s2.start('Starting local fine-tuning...');
+        try {
+            await tune.finetune({
+                model: model as string,
+                trainFile: trainFile as string,
+                preset: 'default',
+                epochs: parseInt(epochs as string),
+                batchSize: 1,
+                learningRate: 2e-5,
+                loraRank: 16,
+                outputDir: './output',
+                useTriton: false,
+                useLisa: false
+            });
+            s2.stop(green('Fine-tuning job started locally!'));
+        } catch (e: any) {
+            s2.stop(red(`Failed to start job: ${e.message}`));
         }
     }
+}
 
-    const s2 = spinner();
-    s2.start('Starting local fine-tuning...');
-
-    try {
-        const config: any = {
-            model: model as string,
-            trainFile: trainFile as string,
-            preset: 'default', // simplified
-            epochs: parseInt(epochs as string),
-            batchSize: 1,
-            learningRate: 2e-5,
-            loraRank: 16,
-            outputDir: './output'
-        };
-
-        await tune.finetune(config);
-        s2.stop(green('Fine-tuning job started successfully!'));
-    } catch (e: any) {
-        s2.stop(red('Failed to start job.'));
-        throw e;
-    }
+function formatBytes(bytes: number, decimals = 2) {
+    if (!+bytes) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
 // Handler for Langtune Generation
@@ -159,16 +196,16 @@ export async function handleTuneList(trainingClient: TrainingClient) {
     s.start('Fetching fine-tuning jobs...');
 
     const config = getConfig();
-    let workspaceId = config.workspace_id;
+    let projectId = config.project_id;
 
-    if (!workspaceId) {
-        s.stop(yellow('Workspace ID required to list jobs.'));
-        workspaceId = await text({ message: 'Enter Workspace ID:' });
-        if (isCancel(workspaceId)) return;
+    if (!projectId) {
+        s.stop(yellow('Project ID required to list jobs.'));
+        projectId = await text({ message: 'Enter Project ID:' });
+        if (isCancel(projectId)) return;
     }
 
     try {
-        const jobs = await trainingClient.listJobs(workspaceId as string);
+        const jobs = await trainingClient.listJobs(projectId as string);
         s.stop(`Found ${jobs.data.length} jobs`);
 
         if (jobs.data.length === 0) {
@@ -229,7 +266,11 @@ export async function handleTuneStatus(trainingClient: TrainingClient, jobId?: s
         console.log(`Name:      ${job.name}`);
         console.log(`Status:    ${job.status === 'completed' ? green(job.status) : job.status}`);
         console.log(`Model:     ${job.base_model}`);
+        console.log(`Method:    ${job.training_method || 'sft'}`);
         console.log(`Progress:  ${job.progress || 0}%`);
+        console.log(`Created:   ${new Date(job.created_at).toLocaleString()}`);
+        if (job.started_at) console.log(`Started:   ${new Date(job.started_at).toLocaleString()}`);
+        if (job.completed_at) console.log(`Completed: ${new Date(job.completed_at).toLocaleString()}`);
         if (job.error_message) console.log(red(`Error:     ${job.error_message}`));
         console.log(gray('------------------------------------------------'));
 

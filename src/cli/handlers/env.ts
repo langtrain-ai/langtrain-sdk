@@ -8,7 +8,7 @@ export async function handleEnvList(client: SecretClient) {
     s.start('Fetching secrets...');
     const config = getConfig();
     try {
-        const secrets = await client.list(config.workspace_id);
+        const secrets = await client.list(config.project_id);
         s.stop(`Found ${secrets.length} secrets`);
 
         if (secrets.length === 0) {
@@ -48,7 +48,7 @@ export async function handleEnvSet(client: SecretClient, keyVal?: string) {
     const config = getConfig();
 
     try {
-        await client.set(key, value, config.workspace_id);
+        await client.set(key, value, config.project_id);
         s.stop(green(`Secret ${key} set successfully.`));
     } catch (e: any) {
         s.stop(red(`Failed to set secret: ${e.message}`));
@@ -77,9 +77,9 @@ export async function handleEnvMenu(client: SecretClient) {
             const s = spinner();
             s.start('Removing...');
             try {
-                // need workspace_id
+                // need project_id
                 const config = getConfig();
-                await client.delete(key as string, config.workspace_id);
+                await client.delete(key as string, config.project_id);
                 s.stop(green('Removed.'));
             } catch (e: any) {
                 s.stop(red(`Failed: ${e.message}`));

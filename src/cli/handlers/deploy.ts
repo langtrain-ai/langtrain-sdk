@@ -34,18 +34,18 @@ export async function handleDeploy(client: AgentClient) {
             } else {
                 // Create
                 const payload: AgentCreate = {
-                    workspace_id: config.workspace_id || (existingAgents[0]?.workspace_id) || '', // Need a way to get workspace!
+                    project_id: config.project_id || (existingAgents[0]?.project_id) || '', // Need a way to get project!
                     name: agentConfig.name,
                     description: agentConfig.description,
                     config: agentConfig.config
                 };
 
-                // Fallback for workspace_id
-                if (!payload.workspace_id) {
+                // Fallback for project_id
+                if (!payload.project_id) {
                     // Try to get from first agent or error
-                    // Realistically, user needs to set workspace_id in config or we infer from API key scope.
+                    // Realistically, user needs to set project_id in config or we infer from API key scope.
                     // Let's warn.
-                    s.stop(red(`Failed: Workspace ID missing in config for ${agentConfig.name}`));
+                    s.stop(red(`Failed: Project ID missing in config for ${agentConfig.name}`));
                     continue;
                 }
 

@@ -51,24 +51,24 @@ export async function handleAgentCreate(client: AgentClient, modelClient: ModelC
 
     try {
         const agents = await client.list();
-        let workspaceId = "";
+        let projectId = "";
         if (agents.length > 0) {
-            workspaceId = agents[0].workspace_id;
+            projectId = agents[0].project_id;
         } else {
-            s2.stop(yellow('Workspace ID needed (no existing agents found).'));
+            s2.stop(yellow('Project ID needed (no existing agents found).'));
             const wid = await text({
-                message: 'Enter Workspace ID (UUID):',
+                message: 'Enter Project ID (UUID):',
                 validate(value) {
                     if (!value || value.length === 0) return 'Required';
                 },
             });
             if (isCancel(wid)) return;
-            workspaceId = wid as string;
+            projectId = wid as string;
             s2.start('Creating agent...');
         }
 
         const agent = await client.create({
-            workspace_id: workspaceId,
+            project_id: projectId,
             name: name as string,
             description: description as string,
             config: {
@@ -132,7 +132,7 @@ export async function handleAgentList(client: AgentClient) {
     s.stop(`Found ${agents.length} agents`);
 
     if (agents.length === 0) {
-        intro(yellow('No agents found in your workspace.'));
+        intro(yellow('No agents found in your project.'));
         return;
     }
 
