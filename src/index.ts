@@ -11,6 +11,7 @@ export { ModelClient, Model, Permission } from './lib/models';
 export { SecretClient, Secret } from './lib/secrets';
 export { GuardrailClient, Guardrail, GuardrailConfig, GuardrailCreate, GuardrailApplyResult } from './lib/guardrails';
 export { UsageClient, UsageSummary, UsageHistoryPoint } from './lib/usage';
+export { KnowledgeClient, KnowledgeBaseCreate, KnowledgeBaseResponse, KnowledgeChunk, IngestResponse } from './lib/knowledge';
 
 // ── Third-Party Re-exports ─────────────────────────────────────────────────
 export { Langvision } from 'langvision';
