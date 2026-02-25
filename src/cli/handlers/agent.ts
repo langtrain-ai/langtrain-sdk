@@ -170,7 +170,7 @@ export async function handleAgentRun(client: AgentClient, agentId: string, agent
         const s = spinner();
         s.start('Agent is analyzing...');
         try {
-            const result = await client.execute(agentId, { prompt: initialMessage }, [], conversationId);
+            const result = await client.execute(agentId, initialMessage, [], conversationId);
             s.stop();
             if ((result.output as any)?.response) {
                 console.log(gradient.pastel(`Agent: ${(result.output as any).response}`));
@@ -197,7 +197,7 @@ export async function handleAgentRun(client: AgentClient, agentId: string, agent
         const s = spinner();
         s.start('Agent is thinking...');
         try {
-            const result = await client.execute(agentId, { prompt: input }, [], conversationId);
+            const result = await client.execute(agentId, input, [], conversationId);
             s.stop();
 
             if ((result.output as any)?.response) {
