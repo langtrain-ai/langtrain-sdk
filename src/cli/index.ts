@@ -22,7 +22,7 @@ import { handleTokens, handleTelemetry } from './handlers/telemetry';
 import { handleKnowledgeEntities } from './handlers/knowledge';
 
 // Clients
-import { SubscriptionInfo, Langvision, Langtune, AgentClient, ModelClient, FileClient, TrainingClient, SecretClient, KnowledgeClient } from '../index';
+import { SubscriptionInfo, Langvision, Langtune, Langtrain, AgentClient, ModelClient, FileClient, TrainingClient, SecretClient, KnowledgeClient } from '../index';
 import packageJson from '../../package.json';
 
 function showStatusBar(plan: SubscriptionInfo | null) {
@@ -45,14 +45,17 @@ function showStatusBar(plan: SubscriptionInfo | null) {
 }
 
 function buildClients(apiKey: string, baseUrl?: string) {
+    const ai = new Langtrain({ apiKey, baseUrl });
+    // Map to the structure expected by the rest of the CLI
     return {
-        vision: new Langvision({ apiKey }),
-        tune: new Langtune({ apiKey }),
-        agent: new AgentClient({ apiKey, baseUrl }),
-        model: new ModelClient({ apiKey, baseUrl }),
-        train: new TrainingClient({ apiKey, baseUrl }),
-        secret: new SecretClient({ apiKey, baseUrl }),
-        knowledge: new KnowledgeClient({ apiKey, baseUrl }),
+        vision: ai.vision,
+        tune: ai.tune,
+        agent: ai.agents,
+        model: ai.models,
+        train: ai.training,
+        secret: ai.secrets,
+        knowledge: ai.knowledge,
+        file: ai.files
     };
 }
 
@@ -87,36 +90,32 @@ export async function main() {
         .description('Deploy configuration to Langtrain Cloud')
         .action(async () => {
             const config = getConfig();
-            const apiKey = config.apiKey || '';
-            const client = new AgentClient({ apiKey, baseUrl: config.baseUrl });
-            await handleDeploy(client);
+            const ai = new Langtrain({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleDeploy(ai.agents);
         });
 
     program.command('dev')
         .description('Start local development server')
         .action(async () => {
             const config = getConfig();
-            const apiKey = config.apiKey || '';
-            const client = new AgentClient({ apiKey, baseUrl: config.baseUrl });
-            await handleDev(client);
+            const ai = new Langtrain({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleDev(ai.agents);
         });
 
     program.command('env')
         .description('Manage secrets and environment variables')
         .action(async () => {
             const config = getConfig();
-            const apiKey = config.apiKey || '';
-            const client = new SecretClient({ apiKey, baseUrl: config.baseUrl });
-            await handleEnvMenu(client);
+            const ai = new Langtrain({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleEnvMenu(ai.secrets);
         });
 
     program.command('logs [agent]')
         .description('Stream logs from a deployed agent')
         .action(async (agent) => {
             const config = getConfig();
-            const apiKey = config.apiKey || '';
-            const client = new AgentClient({ apiKey, baseUrl: config.baseUrl });
-            await handleLogs(client, agent);
+            const ai = new Langtrain({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleLogs(ai.agents, agent);
         });
 
     program.command('login')
@@ -142,16 +141,16 @@ export async function main() {
         .description('Upload a dataset')
         .action(async () => {
             const config = getConfig();
-            const client = new FileClient({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
-            await handleDataUpload(client);
+            const ai = new Langtrain({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleDataUpload(ai.files);
         });
 
     dataCommand.command('refine [fileId]')
         .description('Refine a dataset using guardrails')
         .action(async (fileId) => {
             const config = getConfig();
-            const client = new FileClient({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
-            await handleDataRefine(client, fileId);
+            const ai = new Langtrain({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleDataRefine(ai.files, fileId);
         });
 
     // ── Guardrail commands ─────────────────────────────────────────────
@@ -285,13 +284,13 @@ export async function main() {
 
                     // Data
                     case 'data-list':
-                        if (apiKey) await handleDataList(new FileClient({ apiKey }));
+                        if (apiKey) await handleDataList(new Langtrain({ apiKey }).files);
                         break;
                     case 'data-upload':
-                        if (apiKey) await handleDataUpload(new FileClient({ apiKey }));
+                        if (apiKey) await handleDataUpload(new Langtrain({ apiKey }).files);
                         break;
                     case 'data-refine':
-                        if (apiKey) await handleDataRefine(new FileClient({ apiKey }));
+                        if (apiKey) await handleDataRefine(new Langtrain({ apiKey }).files);
                         break;
 
                     // Knowledge

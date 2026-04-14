@@ -1,6 +1,6 @@
-
 // ── Core ───────────────────────────────────────────────────────────────────
 export { BaseClient, LangtrainError, ClientConfig } from './lib/base';
+export { Langtrain } from './lib/langtrain';
 
 // ── Clients ────────────────────────────────────────────────────────────────
 export { AgentClient, Agent, AgentRun, AgentCreate, AgentConfig } from './lib/agent';
@@ -25,3 +25,6 @@ import * as ModelTypes from './lib/models';
 import * as SecretTypes from './lib/secrets';
 
 export { Vision, Text, AgentTypes, ModelTypes, SecretTypes };
+
+import { Langtrain } from './lib/langtrain';
+export default Langtrain;
