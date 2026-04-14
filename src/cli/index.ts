@@ -24,24 +24,69 @@ import { handleKnowledgeEntities } from './handlers/knowledge';
 // Clients
 import { SubscriptionInfo, Langvision, Langtune, Langtrain, AgentClient, ModelClient, FileClient, TrainingClient, SecretClient, KnowledgeClient } from '../index';
 import packageJson from '../../package.json';
+import axios from 'axios';
 
-function showStatusBar(plan: SubscriptionInfo | null) {
-    const { dim, green, yellow, cyan, bold, gray } = colors;
-
-    const planLabel = plan?.plan === 'pro'
-        ? bold(green('PRO'))
-        : plan?.plan === 'enterprise'
-            ? bold(green('ENTERPRISE'))
-            : dim('FREE');
+async function showStatusBar(plan: SubscriptionInfo | null) {
+    const { dim, green, yellow, cyan, bold, gray, magenta, red } = colors;
 
     const tokensUsed = plan?.usage?.tokensUsedThisMonth || 0;
-    const tokenLimit = plan?.usage?.tokenLimit || 10000;
-    const pct = Math.round((tokensUsed / tokenLimit) * 100);
-    const tokenBar = pct > 80 ? yellow(`${pct}%`) : green(`${pct}%`);
+    const tokenLimit = plan?.usage?.tokenLimit || 100000;
+    const pct = tokenLimit > 0 ? Math.round((tokensUsed / tokenLimit) * 100) : 0;
+    
+    let contextStr = `${pct}%`;
+    if (pct > 80) contextStr = red(contextStr);
+    else if (pct > 50) contextStr = yellow(contextStr);
+    else contextStr = cyan(contextStr);
+    
+    // Estimate cost ($0.001 / 1k tokens benchmark)
+    const cost = (tokensUsed / 1000) * 0.001;
+    const costStr = `$${cost.toFixed(4)}`;
+    
+    let env = process.env.LANGTRAIN_BASE_URL?.includes('localhost') ? 'local' : 'cloud';
+    let model: string = process.env.LANGTRAIN_MODEL || '';
 
-    console.log(dim('  ─────────────────────────────────────────────'));
-    console.log(`  ${dim('Plan:')} ${planLabel}  ${dim('│')}  ${dim('Tokens:')} ${tokensUsed.toLocaleString()}/${tokenLimit.toLocaleString()} ${tokenBar}`);
-    console.log(dim('  ─────────────────────────────────────────────\n'));
+    // Detect local model servers if no specific model is set
+    if (!model) {
+        model = 'meta-llama-3.1'; // General fallback
+        try {
+            // Check Ollama
+            const res = await axios.get('http://localhost:11434/api/tags', { timeout: 800 });
+            if (res?.data?.models?.[0]?.name) {
+                model = res.data.models[0].name;
+                env = 'local';
+            }
+        } catch {
+            try {
+                // Check LM Studio
+                const res = await axios.get('http://localhost:1234/v1/models', { timeout: 800 });
+                if (res?.data?.data?.[0]?.id) {
+                    model = res.data.data[0].id;
+                    env = 'local';
+                }
+            } catch {
+                // Keep default
+            }
+        }
+    }
+    
+    const col1_1 = ` ${magenta('◯')} ${bold('Langtrain CLI')}`;
+    const col2_1 = `${dim('( )')} Env: ${env}`;
+    const col3_1 = `${dim('( )')} Model: ${cyan(model)}`;
+
+    const col1_2 = ` ${dim('( )')} Context: ${contextStr}`;
+    const col2_2 = `${dim('( )')} Cost: ${costStr}`;
+    const col3_2 = `${dim('( )')} Usage: ${tokensUsed.toLocaleString()} / ${tokenLimit.toLocaleString()} tkns`;
+
+    // Helper to pad strings containing ANSI escape codes
+    const pad = (str: string, len: number) => {
+        const visibleLen = str.replace(/\x1b\[[0-9;]*m/g, '').length;
+        return str + ' '.repeat(Math.max(0, len - visibleLen));
+    };
+
+    console.log(dim('─────────────────────────────────────────────────────────────────────────────'));
+    console.log(`${pad(col1_1, 32)}${pad(col2_1, 18)}${col3_1}`);
+    console.log(`${pad(col1_2, 32)}${pad(col2_2, 18)}${col3_2}`);
+    console.log(dim('─────────────────────────────────────────────────────────────────────────────\n'));
 }
 
 function buildClients(apiKey: string, baseUrl?: string) {
@@ -189,7 +234,7 @@ export async function main() {
         // If authenticated, show status bar
         if (authed && apiKey) {
             try { plan = await getSubscription(apiKey); } catch { }
-            showStatusBar(plan);
+            await showStatusBar(plan);
         } else {
             console.log(colors.dim('  Not logged in. Only basic options available.\n'));
         }
@@ -236,7 +281,7 @@ export async function main() {
                             clients = buildClients(apiKey, config.baseUrl);
                             console.clear();
                             showBanner(version);
-                            showStatusBar(plan);
+                            await showStatusBar(plan);
                         }
                         break;
 
