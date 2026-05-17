@@ -1,7 +1,7 @@
 import { ClientConfig } from './base';
 import { AgentClient } from './agent';
 import { FileClient } from './files';
-import { TrainingClient } from './training';
+import { AdapterClient, TrainingClient } from './training';
 import { ModelClient } from './models';
 import { SecretClient } from './secrets';
 import { GuardrailClient } from './guardrails';
@@ -37,6 +37,8 @@ export class Langtrain {
     public readonly files: FileClient;
     /** Model fine-tuning jobs. */
     public readonly training: TrainingClient;
+    /** LoRA adapter load / unload / merge on live deployments. */
+    public readonly adapters: AdapterClient;
     /** Language model connections. */
     public readonly models: ModelClient;
     /** Environment variables and secrets. */
@@ -76,6 +78,7 @@ export class Langtrain {
         this.agents = new AgentClient(clientConfig);
         this.files = new FileClient(clientConfig);
         this.training = new TrainingClient(clientConfig);
+        this.adapters = new AdapterClient(clientConfig);
         this.models = new ModelClient(clientConfig);
         this.secrets = new SecretClient(clientConfig);
         this.guardrails = new GuardrailClient(clientConfig);

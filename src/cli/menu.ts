@@ -29,7 +29,7 @@ export function getMenu(state: MenuState, plan: SubscriptionInfo | null, isAuthe
                 { value: 'nav-text', label: '  Langtune', hint: 'Text fine-tuning & generation' },
                 { value: 'nav-vision', label: '  Langvision', hint: 'Vision fine-tuning & analysis' },
                 { value: 'nav-data', label: '  Data & Checkpoints', hint: 'Manage training datasets' },
-                { value: 'nav-knowledge', label: '  Intelligence Storage', hint: 'View Cortex knowledge graph' },
+                { value: 'nav-knowledge', label: '  Intelligence Storage', hint: 'View knowledge graph' },
                 { value: 'nav-guard', label: '  Guardrails', hint: 'Data quality & safety rules' },
                 { value: 'init', label: '  Init Project', hint: 'Scaffold new Langtrain app' },
                 { value: 'deploy', label: '  Deploy', hint: 'Push to Langtrain Cloud' },

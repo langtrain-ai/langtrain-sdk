@@ -205,7 +205,7 @@ export async function handleTuneList(trainingClient: TrainingClient) {
     }
 
     try {
-        const jobs = await trainingClient.listJobs(projectId as string);
+        const jobs = await trainingClient.listJobs({ organization_id: projectId as string });
         s.stop(`Found ${jobs.data.length} jobs`);
 
         if (jobs.data.length === 0) {
@@ -222,7 +222,7 @@ export async function handleTuneList(trainingClient: TrainingClient) {
                 statusColor(j.status),
                 j.base_model,
                 (j.progress || 0) + '%',
-                new Date(j.created_at).toLocaleDateString()
+                new Date(j.created_at ?? 0).toLocaleDateString()
             ]);
         });
         console.log(table.toString());
@@ -233,7 +233,7 @@ export async function handleTuneList(trainingClient: TrainingClient) {
             options: jobs.data.map(j => ({
                 value: j.id,
                 label: `${j.name || j.id} (${j.status})`,
-                hint: `Created: ${new Date(j.created_at).toLocaleDateString()}`
+                hint: `Created: ${new Date(j.created_at ?? 0).toLocaleDateString()}`
             }))
         });
 
@@ -268,7 +268,7 @@ export async function handleTuneStatus(trainingClient: TrainingClient, jobId?: s
         console.log(`Model:     ${job.base_model}`);
         console.log(`Method:    ${job.training_method || 'sft'}`);
         console.log(`Progress:  ${job.progress || 0}%`);
-        console.log(`Created:   ${new Date(job.created_at).toLocaleString()}`);
+        console.log(`Created:   ${new Date(job.created_at ?? 0).toLocaleString()}`);
         if (job.started_at) console.log(`Started:   ${new Date(job.started_at).toLocaleString()}`);
         if (job.completed_at) console.log(`Completed: ${new Date(job.completed_at).toLocaleString()}`);
         if (job.error_message) console.log(red(`Error:     ${job.error_message}`));

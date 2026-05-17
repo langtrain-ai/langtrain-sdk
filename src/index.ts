@@ -5,7 +5,22 @@ export { Langtrain } from './lib/langtrain';
 // ── Clients ────────────────────────────────────────────────────────────────
 export { AgentClient, Agent, AgentRun, AgentCreate, AgentConfig } from './lib/agent';
 export { FileClient, FileResponse } from './lib/files';
-export { TrainingClient, FineTuneJobCreate, FineTuneJobResponse, FineTuneJobList, FineTuneHyperparameters } from './lib/training';
+export {
+    TrainingClient,
+    AdapterClient,
+    FineTuneJobCreate,
+    FineTuneJobResponse,
+    FineTuneJobList,
+    FineTuneJobMetrics,
+    FineTuneHyperparameters,
+    TrainingMethod,
+    TrainingMethodInfo,
+    TrainingTelemetryPoint,
+    AdapterLoadRequest,
+    AdapterLoadResponse,
+    AdapterMergeRequest,
+    AdapterMergeResponse,
+} from './lib/training';
 export { SubscriptionClient, SubscriptionInfo, FeatureCheck } from './lib/subscription';
 export { ModelClient, Model, Permission } from './lib/models';
 export { SecretClient, Secret } from './lib/secrets';

@@ -55,8 +55,9 @@ export async function handleLogs(client: AgentClient, agentName?: string) {
 
         console.log(gray('------------------------------------------------'));
         console.log(`${bgMagenta(black(' Recent Logs '))}`);
-        if (logs.logs && logs.logs.length > 0) {
-            logs.logs.forEach(log => console.log(log));
+        const logLines = Array.isArray((logs as any).logs) ? (logs as any).logs : logs;
+        if (logLines && logLines.length > 0) {
+            logLines.forEach((log: string) => console.log(log));
         } else {
             console.log(gray('(No logs found)'));
         }

@@ -46,7 +46,7 @@ export interface IngestResponse {
     error?: string;
 }
 
-export interface CortexEntity {
+export interface KnowledgeEntity {
     id: string;
     dataset_id: string;
     type: string;
@@ -131,10 +131,10 @@ export class KnowledgeClient extends BaseClient {
         });
     }
 
-    /** Get all extracted Knowledge Entities for Cortex Data Plane. */
-    async listEntities(datasetId?: string): Promise<CortexEntity[]> {
+    /** Get all extracted Knowledge Entities for the Langtrain Intelligence layer. */
+    async listEntities(datasetId?: string): Promise<KnowledgeEntity[]> {
         return this.request(async () => {
-            const res = await this.http.get<CortexEntity[]>('/knowledge/entities', {
+            const res = await this.http.get<KnowledgeEntity[]>('/knowledge/entities', {
                 params: datasetId ? { dataset_id: datasetId } : undefined,
             });
             return res.data;

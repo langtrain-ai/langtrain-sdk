@@ -2,7 +2,7 @@ import { intro, outro, spinner } from '@clack/prompts';
 import { KnowledgeClient } from '../../lib/knowledge';
 
 export async function handleKnowledgeEntities(client: KnowledgeClient) {
-    intro('🌍 Cortex Intelligence Explorer');
+    intro('🌍 Langtrain Intelligence Explorer');
     const s = spinner();
     s.start('Fetching extracted entities from the Data Plane...');
     try {

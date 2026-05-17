@@ -284,7 +284,7 @@ export abstract class BaseClient {
 
     private log(msg: string): void {
         if (this.debug) {
-            process.stderr.write(`[cortex] ${msg}\n`);
+            process.stderr.write(`[langtrain] ${msg}\n`);
         }
     }
 

@@ -110,7 +110,7 @@ function getMessageForState(state: MenuState): string {
         case 'agents': return 'Agents:';
         case 'text': return 'Langtune (Text):';
         case 'vision': return 'Langvision (Vision):';
-        case 'knowledge': return 'Cortex Intelligence:';
+        case 'knowledge': return 'Intelligence Storage:';
         case 'guard': return 'Guardrails:';
         case 'settings': return 'Settings:';
         default: return 'Select an option:';
