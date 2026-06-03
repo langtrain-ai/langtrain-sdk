@@ -308,9 +308,13 @@ export async function main() {
             // ── REPL mode (default) ──────────────────────────────────────
             if (!authed || !apiKey) {
                 showBanner(version);
-                console.log(colors.yellow('  ⚠ Not logged in.\n'));
-                console.log(colors.dim('  Run: lt login\n'));
-                process.exit(0);
+                console.log(colors.yellow('  ⚠  Not logged in.\n'));
+                console.log(colors.dim('  Opening browser to authenticate…\n'));
+                await handleLogin();
+                // Re-read config after login
+                const newConfig = getConfig();
+                if (!newConfig.apiKey) process.exit(0);
+                apiKey = newConfig.apiKey;
             }
 
             const clients = buildClients(apiKey, config.baseUrl);
