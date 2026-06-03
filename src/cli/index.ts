@@ -4,6 +4,8 @@ import { select, isCancel, outro, intro, colors, showBanner } from './ui';
 import { ensureAuth, handleLogin, handleLogout, getSubscription, isAuthenticated } from './auth';
 import { getMenu, MenuState } from './menu';
 import { getConfig } from './config';
+import { initSession } from './session';
+import { startRepl } from './repl';
 
 // Handlers
 import { handleSubscriptionStatus } from './handlers/subscription';
@@ -91,16 +93,22 @@ async function showStatusBar(plan: SubscriptionInfo | null) {
 
 function buildClients(apiKey: string, baseUrl?: string) {
     const ai = new Langtrain({ apiKey, baseUrl });
-    // Map to the structure expected by the rest of the CLI
     return {
-        vision: ai.vision,
-        tune: ai.tune,
-        agent: ai.agents,
-        model: ai.models,
-        train: ai.training,
-        secret: ai.secrets,
+        vision:   ai.vision,
+        tune:     ai.tune,
+        agent:    ai.agents,
+        model:    ai.models,
+        training: ai.training,
+        train:    ai.training,   // alias used by handlers
+        secret:   ai.secrets,
+        secrets:  ai.secrets,
         knowledge: ai.knowledge,
-        file: ai.files
+        file:     ai.files,
+        files:    ai.files,
+        agents:   ai.agents,
+        models:   ai.models,
+        guardrails: null,
+        subscription: null,
     };
 }
 
@@ -209,147 +217,112 @@ export async function main() {
         .description('Create a new guardrail')
         .action(async () => await handleGuardrailCreate(null));
 
-    // ── Interactive mode (default action) ──────────────────────────────
-    program.action(async () => {
-        showBanner(version);
+    // ── Default action: REPL  (--menu falls back to old menu UI) ──────────
+    program
+        .option('--menu', 'Use the classic menu-driven interface instead of the REPL')
+        .action(async (opts) => {
+            // First-run check (postinstall hook)
+            const isFirstRun = process.argv.includes('--first-run');
+            if (isFirstRun) {
+                if (process.stdin.isTTY) {
+                    showBanner(version);
+                    intro('Welcome to Langtrain! Let\'s get you set up.');
+                    await handleLogin();
+                } else {
+                    console.log('Langtrain installed. Run "lt login" to authenticate, then "lt" to start.');
+                    process.exit(0);
+                }
+            }
 
-        // First-run check
-        const isFirstRun = process.argv.includes('--first-run');
-        if (isFirstRun) {
-            if (process.stdin.isTTY) {
-                intro('Welcome to Langtrain! Let\'s get you set up.');
-                await handleLogin();
-            } else {
-                console.log('Langtrain installed! Run "npx langtrain login" to authenticate.');
+            let config  = getConfig();
+            let apiKey  = config.apiKey || '';
+            let authed  = isAuthenticated();
+            let plan: SubscriptionInfo | null = null;
+
+            if (authed && apiKey) {
+                try { plan = await getSubscription(apiKey); } catch {}
+            }
+
+            // ── Classic menu mode ────────────────────────────────────────
+            if (opts?.menu) {
+                showBanner(version);
+                if (authed && apiKey) {
+                    await showStatusBar(plan);
+                } else {
+                    console.log(colors.dim('  Not logged in. Only basic options available.\n'));
+                }
+                let clients = authed ? buildClients(apiKey, config.baseUrl) : null;
+                let currentState: MenuState = 'main';
+                while (true) {
+                    const operation = await select({
+                        message: getMessageForState(currentState),
+                        options: getMenu(currentState, plan, authed)
+                    });
+                    if (isCancel(operation)) {
+                        if (currentState === 'main') { outro('Goodbye!'); process.exit(0); }
+                        else { currentState = 'main'; continue; }
+                    }
+                    const op = operation as string;
+                    if (op === 'exit') { outro('Goodbye!'); process.exit(0); }
+                    if (op === 'back') { currentState = 'main'; continue; }
+                    if (op.startsWith('nav-')) { currentState = op.replace('nav-', '') as MenuState; continue; }
+                    try {
+                        switch (op) {
+                            case 'login':
+                                await handleLogin(); config = getConfig(); apiKey = config.apiKey || '';
+                                authed = isAuthenticated();
+                                if (authed) { try { plan = await getSubscription(apiKey); } catch {} clients = buildClients(apiKey, config.baseUrl); }
+                                break;
+                            case 'logout': await handleLogout(); apiKey = ''; authed = false; plan = null; clients = null; break;
+                            case 'docs': console.log(colors.cyan('\n  📖 https://docs.langtrain.xyz\n')); break;
+                            case 'status': await handleSubscriptionStatus(); break;
+                            case 'tokens': await handleTokens(); break;
+                            case 'telemetry': await handleTelemetry(); break;
+                            case 'doctor': await handleDoctor(); break;
+                            case 'init': await handleInit(); break;
+                            case 'deploy': if (clients) await handleDeploy(clients.agent); break;
+                            case 'dev': if (clients) await handleDev(clients.agent); break;
+                            case 'env': if (clients) await handleEnvMenu(clients.secret); break;
+                            case 'logs': if (clients) await handleLogs(clients.agent); break;
+                            case 'tune-finetune': if (clients) await handleTuneFinetune(clients.tune, clients.model); break;
+                            case 'tune-list': if (clients) await handleTuneList(clients.train); break;
+                            case 'tune-generate': if (clients) await handleTuneGenerate(clients.tune); break;
+                            case 'vision-finetune': if (clients) await handleVisionFinetune(clients.vision, clients.model); break;
+                            case 'vision-generate': if (clients) await handleVisionGenerate(clients.vision); break;
+                            case 'agent-list': if (clients) await handleAgentList(clients.agent); break;
+                            case 'agent-create': if (clients) await handleAgentCreate(clients.agent, clients.model); break;
+                            case 'agent-delete': if (clients) await handleAgentDelete(clients.agent); break;
+                            case 'data-list': if (apiKey) await handleDataList(new Langtrain({ apiKey }).files); break;
+                            case 'data-upload': if (apiKey) await handleDataUpload(new Langtrain({ apiKey }).files); break;
+                            case 'data-refine': if (apiKey) await handleDataRefine(new Langtrain({ apiKey }).files); break;
+                            case 'knowledge-entities': if (clients) await handleKnowledgeEntities(clients.knowledge); break;
+                            case 'guard-list': await handleGuardrailList(null); break;
+                            case 'guard-create': await handleGuardrailCreate(null); break;
+                        }
+                    } catch (error: any) {
+                        outro(colors.red(`Error: ${error.message}`));
+                    }
+                }
+            }
+
+            // ── REPL mode (default) ──────────────────────────────────────
+            if (!authed || !apiKey) {
+                showBanner(version);
+                console.log(colors.yellow('  ⚠ Not logged in.\n'));
+                console.log(colors.dim('  Run: lt login\n'));
                 process.exit(0);
             }
-        }
 
-        // ── Auth-gated flow ───────────────────────────────────────────
-        let config = getConfig();
-        let apiKey = config.apiKey || '';
-        let authed = isAuthenticated();
-        let plan: SubscriptionInfo | null = null;
+            const clients = buildClients(apiKey, config.baseUrl);
 
-        // If authenticated, show status bar
-        if (authed && apiKey) {
-            try { plan = await getSubscription(apiKey); } catch { }
-            await showStatusBar(plan);
-        } else {
-            console.log(colors.dim('  Not logged in. Only basic options available.\n'));
-        }
-
-        let clients = authed ? buildClients(apiKey, config.baseUrl) : null;
-
-        // ── Navigation loop ──────────────────────────────────────────
-        let currentState: MenuState = 'main';
-
-        while (true) {
-            const operation = await select({
-                message: getMessageForState(currentState),
-                options: getMenu(currentState, plan, authed)
+            initSession({
+                apiKey,
+                baseUrl: config.baseUrl,
+                projectId: config.project_id,
             });
 
-            if (isCancel(operation)) {
-                if (currentState === 'main') {
-                    outro('Goodbye!');
-                    process.exit(0);
-                } else {
-                    currentState = 'main';
-                    continue;
-                }
-            }
-
-            const op = operation as string;
-
-            // Navigation
-            if (op === 'exit') { outro('Goodbye!'); process.exit(0); }
-            if (op === 'back') { currentState = 'main'; continue; }
-            if (op.startsWith('nav-')) { currentState = op.replace('nav-', '') as MenuState; continue; }
-
-            // Actions
-            try {
-                switch (op) {
-                    // Auth
-                    case 'login':
-                        await handleLogin();
-                        config = getConfig();
-                        apiKey = config.apiKey || '';
-                        authed = isAuthenticated();
-                        if (authed) {
-                            try { plan = await getSubscription(apiKey); } catch { }
-                            clients = buildClients(apiKey, config.baseUrl);
-                            console.clear();
-                            showBanner(version);
-                            await showStatusBar(plan);
-                        }
-                        break;
-
-                    case 'logout':
-                        await handleLogout();
-                        apiKey = '';
-                        authed = false;
-                        plan = null;
-                        clients = null;
-                        console.clear();
-                        showBanner(version);
-                        console.log(colors.dim('  Logged out. Only basic options available.\n'));
-                        break;
-
-                    case 'docs':
-                        console.log(colors.cyan('\n  📖 https://docs.langtrain.xyz\n'));
-                        break;
-
-                    // Status & info
-                    case 'status': await handleSubscriptionStatus(); break;
-                    case 'tokens': await handleTokens(); break;
-                    case 'telemetry': await handleTelemetry(); break;
-                    case 'doctor': await handleDoctor(); break;
-
-                    // Project
-                    case 'init': await handleInit(); break;
-                    case 'deploy': if (clients) await handleDeploy(clients.agent); break;
-                    case 'dev': if (clients) await handleDev(clients.agent); break;
-                    case 'env': if (clients) await handleEnvMenu(clients.secret); break;
-                    case 'logs': if (clients) await handleLogs(clients.agent); break;
-
-                    // Tune
-                    case 'tune-finetune': if (clients) await handleTuneFinetune(clients.tune, clients.model); break;
-                    case 'tune-list': if (clients) await handleTuneList(clients.train); break;
-                    case 'tune-generate': if (clients) await handleTuneGenerate(clients.tune); break;
-
-                    // Vision
-                    case 'vision-finetune': if (clients) await handleVisionFinetune(clients.vision, clients.model); break;
-                    case 'vision-generate': if (clients) await handleVisionGenerate(clients.vision); break;
-
-                    // Agents
-                    case 'agent-list': if (clients) await handleAgentList(clients.agent); break;
-                    case 'agent-create': if (clients) await handleAgentCreate(clients.agent, clients.model); break;
-                    case 'agent-delete': if (clients) await handleAgentDelete(clients.agent); break;
-
-                    // Data
-                    case 'data-list':
-                        if (apiKey) await handleDataList(new Langtrain({ apiKey }).files);
-                        break;
-                    case 'data-upload':
-                        if (apiKey) await handleDataUpload(new Langtrain({ apiKey }).files);
-                        break;
-                    case 'data-refine':
-                        if (apiKey) await handleDataRefine(new Langtrain({ apiKey }).files);
-                        break;
-
-                    // Knowledge
-                    case 'knowledge-entities': if (clients) await handleKnowledgeEntities(clients.knowledge); break;
-
-                    // Guardrails
-                    case 'guard-list': await handleGuardrailList(null); break;
-                    case 'guard-create': await handleGuardrailCreate(null); break;
-                }
-            } catch (error: any) {
-                outro(colors.red(`Error: ${error.message}`));
-            }
-        }
-    });
+            await startRepl(clients);
+        });
 
     program.parse(process.argv);
 }
