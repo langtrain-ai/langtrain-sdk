@@ -44,8 +44,8 @@ import { colors, showBanner } from './ui';
 const { green, red, yellow, cyan, dim, bold, magenta, bgMagenta, black, gray } = colors;
 const execAsync = promisify(exec);
 
-const APP_URL = process.env.LANGTRAIN_APP_URL  || 'https://app.langtrain.xyz';
-const API_URL = (() => {
+const AUTH_URL = process.env.LANGTRAIN_AUTH_URL || 'https://auth.langtrain.xyz';
+const API_URL  = (() => {
     const cfg = getConfig();
     return (cfg.baseUrl || 'https://api.langtrain.xyz').replace(/\/$/, '');
 })();
@@ -209,14 +209,17 @@ export async function ensureAuth(): Promise<string> {
 export async function handleLogin(): Promise<void> {
     const state   = crypto.randomBytes(24).toString('hex');
     const port    = await findFreePort();
-    const authUrl = `${APP_URL}/cli-auth?state=${state}&port=${port}&source=cli`;
+    // auth.langtrain.xyz handles Google OAuth and company email sign-in
+    // After the user authenticates it redirects to:
+    //   http://localhost:<port>/callback?token=<api_key>&state=<state>
+    const authUrl = `${AUTH_URL}/cli?state=${state}&port=${port}`;
 
     console.log();
     console.log(box([
         bold('Sign in to Langtrain'),
         '',
-        dim('Fine-tune text and vision models from your terminal.'),
-        dim('We\'ll open your browser to complete authentication.'),
+        dim('Continue with Google or your company email.'),
+        dim('We\'ll open your browser to complete sign-in.'),
     ]));
     console.log();
 
