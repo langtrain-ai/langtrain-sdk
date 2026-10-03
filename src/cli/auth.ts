@@ -141,9 +141,10 @@ function startCallbackServer(port: number, expectedState: string): Promise<{ tok
 async function fetchUserInfo(token: string): Promise<{ email?: string; plan?: string }> {
     try {
         const axios = (await import('axios')).default;
-        const res   = await axios.get(`${API_URL}/v1/users/me`,
-            { headers: { 'x-api-key': token }, timeout: 6000 });
-        return res.data || {};
+        // The key-validation endpoint returns the plan; it doesn't return an email.
+        const res   = await axios.post(`${API_URL}/api/v1/auth/api-keys/validate`, null,
+            { params: { api_key: token }, timeout: 6000 });
+        return { plan: res.data?.plan };
     } catch { return {}; }
 }
 

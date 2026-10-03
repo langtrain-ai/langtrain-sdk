@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { fetchGpuTiers } from './gpuTiers';
 import { spinner, showError, showWarning, colors } from '../ui';
 
 const { green, red, yellow, cyan, bold, dim, magenta } = colors;
@@ -13,19 +14,19 @@ export async function handleGpuStatus(apiKey: string, baseUrl?: string): Promise
     const headers = { 'x-api-key': apiKey };
 
     const s = spinner();
-    s.start('Fetching GPU availability...');
+    s.start('Fetching GPU tiers...');
 
     let gpus: any[] = [];
     let usage: any = null;
 
     try {
         const [availRes, usageRes] = await Promise.allSettled([
-            axios.get(`${base}/api/v1/gpu/available`, { headers, timeout: 8000 }),
-            axios.get(`${base}/api/v1/gpu/usage`, { headers, timeout: 8000 })
+            fetchGpuTiers(base, apiKey),
+            axios.get(`${base}/api/v1/usage`, { headers, timeout: 8000 })
         ]);
 
         if (availRes.status === 'fulfilled') {
-            gpus = availRes.value.data?.gpus || availRes.value.data || [];
+            gpus = availRes.value;
         }
         if (usageRes.status === 'fulfilled') {
             usage = usageRes.value.data;
@@ -44,7 +45,7 @@ export async function handleGpuStatus(apiKey: string, baseUrl?: string): Promise
         dim('│') + bold(padEnd('  VRAM', 10)) +
         dim('│') + bold(padEnd('  ×', 7)) +
         dim('│') + bold(padEnd('  $/hr', 10)) +
-        dim('│') + bold(padEnd('  Status', 10)) +
+        dim('│') + bold(padEnd('  For', 10)) +
         dim('│')
     );
     console.log(dim('  ├──────────────────────┼──────────┼───────┼──────────┼──────────┤'));
@@ -57,11 +58,11 @@ export async function handleGpuStatus(apiKey: string, baseUrl?: string): Promise
             const vram = `${g.vram_gb || '?'}GB`;
             const count = `×${g.count || 1}`;
             const price = `$${(g.price_per_hour || 0).toFixed(2)}`;
-            const isBusy = g.available === false || g.status === 'busy';
-            const status = isBusy ? yellow('⚡ Busy') : green('✓ Free');
+            // The API lists tiers and prices, not live availability.
+            const status = dim(String(g.recommended_for || '').slice(0, 10));
 
             console.log(
-                '  ' + dim('│') + '  ' + padEnd(cyan(name), 22) +
+                '  ' + dim('│') + '  ' + padEnd(cyan(String(name)), 22) +
                 dim('│') + '  ' + padEnd(vram, 8) +
                 dim('│') + '  ' + padEnd(count, 5) +
                 dim('│') + '  ' + padEnd(yellow(price), 10) +

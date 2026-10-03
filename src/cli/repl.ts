@@ -20,6 +20,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 
 import { colors, showBanner } from './ui';
+import packageJson from '../../package.json';
 import { getSession, initSession, sessionContext } from './session';
 import { findCommand, parseArgs, getAllCommands, completionList, CommandContext } from './commands';
 import { parseNaturalLanguage, formatIntent } from './nl_parser';
@@ -74,13 +75,13 @@ async function handleFileRef(
   }
 
   // Upload inline
-  const { spinner } = await import('./ui');
+  const { spinner } = await import('./ui.js');
   const s = spinner();
   s.start(`Uploading ${path.basename(filePath)}…`);
   try {
     const uploaded = await clients.files.upload(filePath, session.projectId || '', 'fine-tune');
     s.stop(green(`Uploaded  ${path.basename(filePath)}  →  ${uploaded.id}`));
-    const { addFileRef, setActiveDataset } = await import('./session');
+    const { addFileRef, setActiveDataset } = await import('./session.js');
     addFileRef(filePath, uploaded.id);
     setActiveDataset(uploaded.id, path.basename(filePath));
     console.log(`  ${dim('Tip: /analyze to inspect  ·  /train to start fine-tuning')}`);
@@ -204,7 +205,7 @@ function tabCompleter(line: string): [string[], string] {
 export async function startRepl(clients: CommandContext['clients']): Promise<void> {
   const session = getSession();
 
-  showBanner();
+  showBanner(packageJson.version);
   showWelcomeTips(!!session.activeJob);
 
   const rl = readline.createInterface({
