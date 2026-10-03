@@ -246,7 +246,7 @@ export class TrainingClient extends BaseClient {
     /** Create a new fine-tuning job. Idempotent if idempotency_key is set. */
     async createJob(job: FineTuneJobCreate): Promise<FineTuneJobResponse> {
         return this.request(async () => {
-            const res = await this.http.post<FineTuneJobResponse>('/finetune/jobs', job);
+            const res = await this.http.post<FineTuneJobResponse>('/training/jobs', job);
             return res.data;
         });
     }
@@ -259,7 +259,7 @@ export class TrainingClient extends BaseClient {
         status?: FineTuneJobResponse['status'];
     }): Promise<FineTuneJobList> {
         return this.request(async () => {
-            const res = await this.http.get<FineTuneJobList>('/finetune/jobs', { params });
+            const res = await this.http.get<FineTuneJobList>('/training/jobs', { params });
             return res.data;
         });
     }
@@ -267,7 +267,7 @@ export class TrainingClient extends BaseClient {
     /** Get a specific job by ID. */
     async getJob(jobId: string): Promise<FineTuneJobResponse> {
         return this.request(async () => {
-            const res = await this.http.get<FineTuneJobResponse>(`/finetune/jobs/${jobId}`);
+            const res = await this.http.get<FineTuneJobResponse>(`/training/jobs/${jobId}`);
             return res.data;
         });
     }
@@ -275,7 +275,7 @@ export class TrainingClient extends BaseClient {
     /** Cancel a running or queued job. */
     async cancelJob(jobId: string): Promise<FineTuneJobResponse> {
         return this.request(async () => {
-            const res = await this.http.post<FineTuneJobResponse>(`/finetune/jobs/${jobId}/cancel`);
+            const res = await this.http.post<FineTuneJobResponse>(`/training/jobs/${jobId}/cancel`);
             return res.data;
         });
     }
@@ -306,7 +306,7 @@ export class TrainingClient extends BaseClient {
 
     /**
      * Stream training telemetry (loss, lr, GPU stats) as an async generator.
-     * Polls the telemetry endpoint every 10 seconds while the job is running.
+     * Polls the run every 10 seconds and yields each new step it reports.
      *
      * @example
      * ```ts
@@ -328,19 +328,18 @@ export class TrainingClient extends BaseClient {
                 break;
             }
 
-            try {
-                const res = await this.http.get<TrainingTelemetryPoint[]>(
-                    `/finetune/jobs/${jobId}/telemetry`,
-                    { params: { after_step: lastStep } },
-                );
-                for (const point of res.data ?? []) {
-                    if (point.step > lastStep) {
-                        lastStep = point.step;
-                        yield point;
-                    }
-                }
-            } catch {
-                // Telemetry endpoint may not be available yet — keep polling
+            // The API has no telemetry read endpoint; the run's latest metrics carry the step.
+            const m = (job.metrics ?? {}) as Record<string, unknown>;
+            const step = (m.step ?? m.global_step) as number | undefined;
+            if (typeof step === 'number' && step > lastStep) {
+                lastStep = step;
+                yield {
+                    step,
+                    loss: (m.loss ?? m.train_loss) as number | undefined,
+                    learning_rate: m.learning_rate as number | undefined,
+                    epoch: m.epoch as number | undefined,
+                    timestamp: new Date().toISOString(),
+                };
             }
 
             if (['completed', 'failed', 'cancelled'].includes(job.status)) break;
@@ -499,7 +498,7 @@ export class AdapterClient extends BaseClient {
     async load(request: AdapterLoadRequest): Promise<AdapterLoadResponse> {
         return this.request(async () => {
             const res = await this.http.post<AdapterLoadResponse>(
-                '/finetune/adapters/load',
+                '/training/adapters/load',
                 request,
             );
             return res.data;
@@ -512,7 +511,7 @@ export class AdapterClient extends BaseClient {
     async unload(deploymentId: string, slot = 0): Promise<{ success: boolean }> {
         return this.request(async () => {
             const res = await this.http.post<{ success: boolean }>(
-                '/finetune/adapters/unload',
+                '/training/adapters/unload',
                 { deployment_id: deploymentId, slot },
             );
             return res.data;
@@ -527,7 +526,7 @@ export class AdapterClient extends BaseClient {
     async merge(request: AdapterMergeRequest): Promise<AdapterMergeResponse> {
         return this.request(async () => {
             const res = await this.http.post<AdapterMergeResponse>(
-                '/finetune/adapters/merge',
+                '/training/adapters/merge',
                 request,
             );
             return res.data;
@@ -540,7 +539,7 @@ export class AdapterClient extends BaseClient {
     async list(deploymentId: string): Promise<AdapterLoadResponse[]> {
         return this.request(async () => {
             const res = await this.http.get<AdapterLoadResponse[]>(
-                '/finetune/adapters',
+                '/training/adapters',
                 { params: { deployment_id: deploymentId } },
             );
             return res.data;

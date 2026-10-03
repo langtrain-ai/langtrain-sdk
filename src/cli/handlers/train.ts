@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { fetchGpuTiers } from './gpuTiers';
 import * as readline from 'readline';
 import { text, select, confirm, isCancel, cancel, spinner, intro, showError, showSuccess, showWarning, showInfo, colors, gradient } from '../ui';
 import { getConfig } from '../config';
@@ -119,14 +120,10 @@ export async function handleAdaptiveTrainFlow(clients: {
     // ── Step 1: GPU availability ──────────────────────────────────────────
     let gpus: any[] = [];
     const s = spinner();
-    s.start('Checking GPU availability...');
+    s.start('Fetching GPU tiers...');
     try {
-        const res = await axios.get(`${base}/api/v1/gpu/available`, {
-            headers: { 'x-api-key': apiKey || '' },
-            timeout: 5000
-        });
-        gpus = res.data?.gpus || res.data || [];
-        s.stop(green(`${gpus.length} GPU type(s) available`));
+        gpus = await fetchGpuTiers(base, apiKey || '', 5000);
+        s.stop(green(`${gpus.length} GPU tier(s)`));
     } catch {
         s.stop(yellow('GPU status unavailable — will use auto-selection'));
     }

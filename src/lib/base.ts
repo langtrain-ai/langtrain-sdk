@@ -32,7 +32,18 @@ export interface RequestEvent {
     rateLimitReset?: number;
 }
 
-const DEFAULT_BASE_URL = 'https://api.langtrain.xyz/v1';
+/** The API server mounts every route under /api/v1. */
+const DEFAULT_BASE_URL = 'https://api.langtrain.xyz/api/v1';
+
+/**
+ * Accepts a host ("https://api.langtrain.xyz", as the CLI and
+ * LANGTRAIN_BASE_URL use it) or a full prefix, and returns the /api/v1 prefix.
+ */
+export function apiBaseUrl(url?: string): string {
+    if (!url) return DEFAULT_BASE_URL;
+    const trimmed = url.replace(/\/+$/, '');
+    return /\/api\/v1$/.test(trimmed) ? trimmed : `${trimmed}/api/v1`;
+}
 const DEFAULT_TIMEOUT = 30_000;
 const DEFAULT_MAX_RETRIES = 2;
 const DEFAULT_MAX_RPS = 10;
@@ -167,12 +178,12 @@ export abstract class BaseClient {
         this.rateLimiter = new RateLimiter(maxRps, maxRps);
 
         this.http = axios.create({
-            baseURL: config.baseUrl || DEFAULT_BASE_URL,
+            baseURL: apiBaseUrl(config.baseUrl),
             timeout: config.timeout ?? DEFAULT_TIMEOUT,
             headers: {
                 'X-API-Key': config.apiKey,
                 'Content-Type': 'application/json',
-                'User-Agent': 'langtrain-sdk/0.2.x',
+                'User-Agent': 'langtrain-sdk/0.3',
             },
         });
     }

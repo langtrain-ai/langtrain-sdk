@@ -14,6 +14,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as readline from 'readline';
 import axios from 'axios';
+import { fetchGpuTiers } from './handlers/gpuTiers';
 
 import { colors, spinner, showError, showSuccess, showWarning, showInfo } from './ui';
 import { getSession, setActiveJob, setActiveModel, setActiveDataset, addFileRef, clearChatHistory, pushChatMessage, clearActiveJob } from './session';
@@ -607,23 +608,20 @@ const cmdAlign: Command = {
 const cmdGpu: Command = {
   name: 'gpu',
   usage: '/gpu',
-  description: 'Show available GPU types, VRAM, count, and pricing.',
+  description: 'Show the GPU tiers cloud runs can use, with VRAM and price.',
   async execute(ctx) {
     const session = getSession();
     const base = (session.baseUrl || 'https://api.langtrain.xyz').replace(/\/$/, '');
     const s = spinner();
-    s.start('Checking GPU availability…');
+    s.start('Fetching GPU tiers…');
     try {
-      const res = await axios.get(`${base}/api/v1/gpu/available`, {
-        headers: { 'x-api-key': session.apiKey || '' }, timeout: 6000
-      });
-      const gpus: any[] = res.data?.gpus || res.data || [];
+      const gpus: any[] = await fetchGpuTiers(base, session.apiKey || '', 6000);
       s.stop(`${gpus.length} GPU type(s)`);
 
-      if (gpus.length === 0) { showInfo('No GPUs available right now.'); return; }
+      if (gpus.length === 0) { showInfo('No GPU tiers listed.'); return; }
 
       console.log();
-      console.log(`  ${bold('Available GPUs')}`);
+      console.log(`  ${bold('GPU tiers')}`);
       console.log(`  ${dim('┌──────────────────────┬──────────┬───────┬──────────┐')}`);
       console.log(`  ${dim('│')} ${bold('GPU                  ')} ${dim('│')} ${bold('VRAM    ')} ${dim('│')} ${bold('Count')} ${dim('│')} ${bold('$/hr    ')} ${dim('│')}`);
       console.log(`  ${dim('├──────────────────────┼──────────┼───────┼──────────┤')}`);
