@@ -62,7 +62,7 @@ export async function handleGpuStatus(apiKey: string, baseUrl?: string): Promise
             const status = dim(String(g.recommended_for || '').slice(0, 10));
 
             console.log(
-                '  ' + dim('│') + '  ' + padEnd(cyan(name), 22) +
+                '  ' + dim('│') + '  ' + padEnd(cyan(String(name)), 22) +
                 dim('│') + '  ' + padEnd(vram, 8) +
                 dim('│') + '  ' + padEnd(count, 5) +
                 dim('│') + '  ' + padEnd(yellow(price), 10) +

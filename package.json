@@ -5,6 +5,9 @@
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "bin": {
     "langtrain": "dist/cli.js",
     "lt": "dist/cli.js"
@@ -12,8 +15,9 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "node dist/cli.js --first-run || true"
+    "test": "npm run build && node --test test/contract.test.mjs",
+    "postinstall": "node dist/cli.js --first-run || true",
+    "typecheck": "tsc --noEmit -p ."
   },
   "keywords": [
     "langtrain",

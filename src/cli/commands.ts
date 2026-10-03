@@ -344,7 +344,7 @@ const cmdJobs: Command = {
       });
       console.log();
     } catch (e: any) {
-      s.stop(red(e.message));
+      s.stop(red(String(e?.message ?? e)));
     }
   },
 };
@@ -499,7 +499,7 @@ const cmdModels: Command = {
       });
       console.log();
     } catch (e: any) {
-      s.stop(red(e.message));
+      s.stop(red(String(e?.message ?? e)));
     }
   },
 };
@@ -635,7 +635,7 @@ const cmdGpu: Command = {
       console.log(`  ${dim('└──────────────────────┴──────────┴───────┴──────────┘')}`);
       console.log();
     } catch (e: any) {
-      s.stop(red(e.message));
+      s.stop(red(String(e?.message ?? e)));
     }
   },
 };

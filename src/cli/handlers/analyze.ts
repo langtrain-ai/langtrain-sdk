@@ -164,8 +164,8 @@ export async function handleAnalyzeDataset(filePath?: string): Promise<void> {
     }
 
     // Lazy import to avoid circular deps
-    const { handleAdaptiveTrainFlow } = await import('./train');
-    const { Langtrain } = await import('../../index');
+    const { handleAdaptiveTrainFlow } = await import('./train.js');
+    const { Langtrain } = await import('../../index.js');
     const ai = new Langtrain({ apiKey: apiKey || '', baseUrl });
     await handleAdaptiveTrainFlow({
         train: ai.training,
