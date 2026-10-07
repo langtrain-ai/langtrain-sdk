@@ -50,6 +50,14 @@ jobs:
         if: env.DRY_RUN == 'true'
         run: npm publish --dry-run
 
+      - name: Verify npm token
+        if: env.DRY_RUN != 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then echo "::error::NPM_TOKEN secret is not set"; exit 1; fi
+          npm whoami || { echo "::error::NPM_TOKEN is invalid or expired; create a new automation token that can publish 'langtrain'"; exit 1; }
+
       - name: Publish to npm
         if: env.DRY_RUN != 'true'
         env:
