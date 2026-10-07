@@ -1,0 +1,57 @@
+name: Release to npm
+
+# Push a tag that matches the version in package.json to release it:
+#   git tag v0.3.2 && git push origin v0.3.2
+# Run it by hand with dry_run (the default) to build and pack without
+# publishing. Needs the NPM_TOKEN repository secret.
+on:
+  push:
+    tags: [ "v*" ]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Build and pack only; don't publish"
+        type: boolean
+        default: true
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: ci
+    runs-on: ubuntu-latest
+    env:
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Tag matches the package version
+        if: github.ref_type == 'tag'
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          test "${GITHUB_REF_NAME}" = "v${VERSION}" || { echo "Tag ${GITHUB_REF_NAME} doesn't match version ${VERSION}"; exit 1; }
+
+      - name: Build
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+
+      - name: Publish (dry run)
+        if: env.DRY_RUN == 'true'
+        run: npm publish --dry-run
+
+      - name: Publish to npm
+        if: env.DRY_RUN != 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish

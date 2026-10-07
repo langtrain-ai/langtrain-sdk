@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  # release.yml runs this first and only publishes if it passes.
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # >=20.19 (package.json engines): the langvision dependency require()s
+        # ESM-only execa, which older Node can't load.
+        node-version: [20, 22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - name: Install
+        run: npm ci --ignore-scripts
+      - name: Type check
+        run: npm run typecheck
+      - name: Build and run the API contract tests
+        run: npm test
+      - name: CLI starts
+        run: node dist/cli.js --help
+      - name: Package contents
+        run: npm pack --dry-run
