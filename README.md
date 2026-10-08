@@ -1,9 +1,9 @@
 <div align="center">
   <br />
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/langtrain-ai/langtrain-sdk/main/public/langtrain-white.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/langtrain-ai/langtrain-sdk/main/public/langtrain-black.svg">
-    <img alt="Langtrain Logo" src="https://raw.githubusercontent.com/langtrain-ai/langtrain-sdk/main/public/langtrain-black.svg" width="280">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/langtrain-ai/langtrain_sdk/main/public/langtrain-white.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/langtrain-ai/langtrain_sdk/main/public/langtrain-black.svg">
+    <img alt="Langtrain Logo" src="https://raw.githubusercontent.com/langtrain-ai/langtrain_sdk/main/public/langtrain-black.svg" width="280">
   </picture>
   
   <br />
@@ -24,7 +24,7 @@
     <a href="https://www.npmjs.com/package/langtrain"><img src="https://img.shields.io/npm/dm/langtrain?style=flat-square&labelColor=18181b&color=3b82f6" alt="npm downloads" /></a>
     <a href="https://langtrain.xyz"><img src="https://img.shields.io/badge/website-langtrain.xyz-18181b?style=flat-square&labelColor=18181b" alt="website" /></a>
     <a href="https://docs.langtrain.xyz"><img src="https://img.shields.io/badge/docs-documentation-18181b?style=flat-square&labelColor=18181b" alt="documentation" /></a>
-    <a href="https://github.com/langtrain-ai/langtrain-sdk/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/langtrain?style=flat-square&labelColor=18181b&color=3b82f6" alt="license" /></a>
+    <a href="https://github.com/langtrain-ai/langtrain_sdk/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/langtrain?style=flat-square&labelColor=18181b&color=3b82f6" alt="license" /></a>
   </p>
 
   <br />
@@ -123,7 +123,7 @@ Configure your environment seamlessly via CLI or environment variables.
 Join the thousands of engineers building with Langtrain.
 
 - **[Documentation](https://docs.langtrain.xyz)** - Guides, API Reference, and Tutorials.
-- **[GitHub Discussions](https://github.com/langtrain-ai/langtrain-sdk/discussions)** - Ask questions, request features.
+- **[GitHub Discussions](https://github.com/langtrain-ai/langtrain_sdk/discussions)** - Ask questions, request features.
 - **[Enterprise Support](mailto:support@langtrain.xyz)** - Dedicated support for teams.
 
 <br />
