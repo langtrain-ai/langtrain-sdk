@@ -187,8 +187,103 @@ export async function main() {
         .description('View token usage for current period')
         .action(handleTokens);
 
+    program.command('telemetry')
+        .description('View detailed API telemetry and metrics')
+        .action(handleTelemetry);
+
+    program.command('doctor')
+        .description('Run diagnostics on your environment, configuration, and API connectivity')
+        .action(handleDoctor);
+
+    program.command('status')
+        .description('View your subscription status and quota')
+        .action(async () => {
+            await handleSubscriptionStatus();
+        });
+
+    program.command('knowledge')
+        .description('View intelligence storage and knowledge entities')
+        .action(async () => {
+            const config = getConfig();
+            const ai = new Langtrain({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleKnowledgeEntities(ai.knowledge);
+        });
+
+    // ── Agent commands ─────────────────────────────────────────────────
+    const agentCommand = program.command('agent').description('Manage autonomous agents');
+    agentCommand.command('list')
+        .description('List available agents')
+        .action(async () => {
+            const config = getConfig();
+            const ai = new Langtrain({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleAgentList(ai.agents);
+        });
+    agentCommand.command('create')
+        .description('Create a new agent')
+        .action(async () => {
+            const config = getConfig();
+            const ai = new Langtrain({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleAgentCreate(ai.agents, ai.models);
+        });
+    agentCommand.command('delete')
+        .description('Delete an agent')
+        .action(async () => {
+            const config = getConfig();
+            const ai = new Langtrain({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleAgentDelete(ai.agents);
+        });
+
+    // ── Tune commands ──────────────────────────────────────────────────
+    const tuneCommand = program.command('tune').description('Text model fine-tuning and inference (Langtune)');
+    tuneCommand.command('list')
+        .description('List fine-tuning jobs')
+        .action(async () => {
+            const config = getConfig();
+            const ai = new Langtrain({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleTuneList(ai.training);
+        });
+    tuneCommand.command('train')
+        .description('Launch fine-tuning for text models')
+        .action(async () => {
+            const config = getConfig();
+            const ai = new Langtrain({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleTuneFinetune(ai.tune, ai.models);
+        });
+    tuneCommand.command('generate')
+        .description('Generate completions from a fine-tuned model')
+        .action(async () => {
+            const config = getConfig();
+            const ai = new Langtrain({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleTuneGenerate(ai.tune);
+        });
+
+    // ── Vision commands ────────────────────────────────────────────────
+    const visionCommand = program.command('vision').description('Multimodal & vision model tuning (Langvision)');
+    visionCommand.command('train')
+        .description('Launch vision model fine-tuning')
+        .action(async () => {
+            const config = getConfig();
+            const ai = new Langtrain({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleVisionFinetune(ai.vision, ai.models);
+        });
+    visionCommand.command('generate')
+        .description('Run multimodal vision inference')
+        .action(async () => {
+            const config = getConfig();
+            const ai = new Langtrain({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleVisionGenerate(ai.vision);
+        });
+
     // ── Data commands ──────────────────────────────────────────────────
     const dataCommand = program.command('data').description('Manage datasets');
+
+    dataCommand.command('list')
+        .description('List uploaded datasets')
+        .action(async () => {
+            const config = getConfig();
+            const ai = new Langtrain({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+            await handleDataList(ai.files);
+        });
 
     dataCommand.command('upload [file]')
         .description('Upload a dataset')
